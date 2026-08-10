@@ -1,12 +1,14 @@
 /*
  * Design system.
  *
- * Register: a light, typographic engineering document. Monospace carries the
- * identity (wordmark, labels, all numerals, table data, chips, metadata); a
- * serif carries prose. Structure comes from hairline rules, letterspaced
- * uppercase labels and hanging indents, never from shadowed cards.
+ * Register: an editorial engineering document. Three voices: an editorial
+ * display serif (Instrument Serif) carries the name, section heads and project
+ * titles at real scale; a grotesque (Instrument Sans) carries prose; a mono
+ * (IBM Plex Mono) is reserved for data: tables, chips, metadata, captions.
+ * Structure comes from hairline rules and the scale contrast between voices,
+ * never from shadowed cards.
  *
- * Two marker types only: the hairline rule and the letterspaced label.
+ * Two marker types only: the hairline rule and the small mono label.
  */
 
 /* ---------------------------------------------------------------- fonts -- */
@@ -36,17 +38,33 @@
 }
 
 @font-face {
-  font-family: 'IBM Plex Sans';
-  src: url('/fonts/ibm-plex-sans-latin-wght-normal.woff2') format('woff2-variations');
-  font-weight: 100 700;
+  font-family: 'Instrument Serif';
+  src: url('/fonts/instrument-serif-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'IBM Plex Sans';
-  src: url('/fonts/ibm-plex-sans-latin-wght-italic.woff2') format('woff2-variations');
-  font-weight: 100 700;
+  font-family: 'Instrument Serif';
+  src: url('/fonts/instrument-serif-latin-400-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/instrument-sans-latin-wght-normal.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/instrument-sans-latin-wght-italic.woff2') format('woff2-variations');
+  font-weight: 400 700;
   font-style: italic;
   font-display: swap;
 }
@@ -67,10 +85,15 @@
   --accent-deep: #07356b;
   --wash: #eceef0;
 
+  /* Three voices: an editorial display serif for names and headings, a
+     grotesque for prose, and a mono reserved for data: tables, chips,
+     metadata, captions. The display face is what keeps this from reading
+     as a default stack. */
+  --display: 'Instrument Serif', 'Georgia', serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Menlo', 'Consolas',
     'Liberation Mono', monospace;
-  --serif: 'IBM Plex Sans', ui-sans-serif, system-ui, 'Segoe UI', 'Helvetica Neue',
-    sans-serif;
+  --serif: 'Instrument Sans', ui-sans-serif, system-ui, 'Segoe UI',
+    'Helvetica Neue', sans-serif;
 
   /* Prose measure: ~70 characters at the body size. */
   --measure: 40rem;
@@ -206,14 +229,14 @@ video {
 }
 
 .wordmark {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0;
   color: var(--ink);
   text-decoration: none;
   margin-right: auto;
+  line-height: 1;
 }
 
 .wordmark:hover {
@@ -265,8 +288,8 @@ video {
 
 .section > .section__head {
   border-top: 1px solid var(--rule-strong);
-  padding-top: 0.6rem;
-  margin-bottom: 1.75rem;
+  padding-top: 0.9rem;
+  margin-bottom: 2rem;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -274,11 +297,12 @@ video {
 }
 
 .section__head h2 {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink);
 }
 
@@ -521,10 +545,14 @@ figcaption .figcaption__source {
   margin: 1.9rem 0;
 }
 
-.clip video {
+.clip video,
+.clip iframe {
   width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
   border: 1px solid var(--rule);
   background: var(--wash);
+  display: block;
 }
 
 .clip__pending {
@@ -575,18 +603,21 @@ figcaption .figcaption__source {
 }
 
 .entry__index {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  color: var(--ink-muted);
-  letter-spacing: 0.08em;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 1.5rem;
+  /* Recedes by size and style, not by contrast; must stay readable. */
+  color: var(--ink-soft);
+  line-height: 1;
 }
 
 .entry__title {
-  font-family: var(--mono);
-  font-size: 1.02rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin: 0.2rem 0 0.4rem;
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0;
+  margin: 0.3rem 0 0.7rem;
 }
 
 .entry__thesis {
@@ -640,14 +671,15 @@ summary:hover .entry__toggle {
 }
 
 .entry__body h3 {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink);
-  margin: 2rem 0 0.7rem;
-  padding-top: 0.55rem;
+  margin: 2.1rem 0 0.6rem;
+  padding-top: 0.7rem;
   border-top: 1px solid var(--rule);
   max-width: var(--measure);
 }
@@ -681,10 +713,11 @@ summary:hover .entry__toggle {
 }
 
 .row__org {
-  font-family: var(--mono);
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0 0 0.15rem;
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.05;
+  margin: 0 0 0.2rem;
 }
 
 .row__title {
@@ -729,9 +762,10 @@ summary:hover .entry__toggle {
 /* ---------------------------------------------------------------- intro -- */
 
 .lede {
-  font-size: 1.22rem;
-  line-height: 1.5;
+  font-size: 1.3rem;
+  line-height: 1.45;
   max-width: var(--measure);
+  text-wrap: pretty;
 }
 
 .hero {
@@ -739,21 +773,29 @@ summary:hover .entry__toggle {
 }
 
 h1 {
-  font-family: var(--mono);
-  font-size: 1.6rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.35rem;
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.4rem;
 }
 
 .hero h1 {
-  font-size: 1.35rem;
+  font-size: clamp(3rem, 7.5vw, 5rem);
+}
+
+/* Italic accent inside display headings. */
+h1 em,
+.display-accent {
+  font-style: italic;
+  color: var(--accent);
 }
 
 /* --------------------------------------------------------- case studies -- */
 
 .case-head {
-  padding-top: 2.75rem;
+  padding-top: 3.25rem;
   border-bottom: 1px solid var(--rule-strong);
   padding-bottom: 1.6rem;
   margin-bottom: 2rem;
@@ -778,22 +820,24 @@ h1 {
 }
 
 .case-body h2 {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-family: var(--display);
+  font-size: 2.1rem;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-transform: none;
   border-top: 1px solid var(--rule-strong);
-  padding-top: 0.65rem;
-  margin: 3rem 0 1.1rem;
+  padding-top: 1rem;
+  margin: 3.4rem 0 1.2rem;
   max-width: 100%;
 }
 
 .case-body h3 {
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin: 1.9rem 0 0.5rem;
+  font-family: var(--display);
+  font-size: 1.45rem;
+  font-weight: 400;
+  font-style: italic;
+  margin: 2.2rem 0 0.6rem;
   max-width: var(--measure);
 }
 
@@ -898,7 +942,8 @@ h1 {
   .skip-link,
   .entry__toggle,
   .clip__pending,
-  video {
+  video,
+  .clip iframe {
     display: none !important;
   }
 

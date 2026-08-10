@@ -47,12 +47,12 @@ import {
 } from '../../data/fortis';
 
 FORTIS is a tethered, holonomic inspection and service robot for the interior of
-General Atomics' DIII-D tokamak. I was the Software, Simulation and Vision Lead
-and the overall technical lead on a five-person team. I owned the software
-architecture, the simulation program, the perception and state estimation
-stack, the containerized development environment, and Jetson Orin bring-up. My
-teammates owned the mechanical design, the electrical distribution and the
-fabrication.
+General Atomics' DIII-D tokamak. I was the technical lead on a five-person team
+and did the bulk of the engineering myself: the system design of the chassis and
+the arm, the entire software stack, all of the simulation work, perception and
+state estimation, and the containerized development environment. My teammates
+carried the physical assembly, the power system, and a share of the CAD
+drafting, which ran under my direction.
 
 <DataTable {...capabilityTiers} />
 
@@ -80,13 +80,23 @@ not advance until numbers existed for it.
 
 Two pieces of methodology carried the program.
 
-The first is how to model an omni wheel in a physics engine that does not
-support anisotropic friction. PhysX does not, so an omni wheel cannot be
-expressed directly. I built each roller ring as a five-sphere chain instead, so
-the geometry itself produces the free-rolling transverse axis. I characterized
-the tradeoff rather than leaving it implicit: sphere rollers overestimate torque
-relative to real free-spinning rollers, which means every motor margin the
-simulation reported is conservative by construction.
+The first is how to model an omni wheel at all. An omni wheel works because its
+contact patch has two different personalities: it grips along the drive
+direction and rolls freely across it on passive perimeter rollers. The clean way
+to express that in a simulator is anisotropic friction, a contact material whose
+coefficient depends on direction, and PhysX does not support it. A cylinder with
+low friction has no traction to drive on; a cylinder with high friction cannot
+strafe; splitting the difference produces a wheel that does both badly. So the
+material property had to become geometry: I modeled each perimeter roller as a
+chain of five spheres, and the whole wheel as a hub carrying rings of those
+chains. Sphere contacts grip in every direction individually, but because the
+chain is free to rotate about the roller axis, the assembly as a whole rolls
+freely across the drive direction, which is exactly the anisotropy the material
+system could not express. The cost is a known bias: sphere chains generate more
+resistance than real free-spinning rollers, roughly 20 percent more torque on
+matched runs, so every motor margin the simulation reported is conservative by
+construction. A model biased the other way would have been useless for sizing
+motors.
 
 The second is constraint-aware sampling. Rather than sampling joint space
 blindly, I drew 5,000 poses uniformly across the four joints with a 3 lb payload
@@ -217,13 +227,19 @@ naturally out of the chamfered chassis.
 
 <Figure id="fortis-internal-layout" />
 
-Arm reach was set at 30 in rather than 50 in. At 50 in the arm needed oversized
-actuators to carry its own weight plus payload, which broke the budget. At 30 in
-it stayed inside the available stepper torque range while still meeting the
-sponsor requirement. Links moved from aluminum to carbon fiber tubing: aluminum
-with external wiring cascaded into larger and costlier motors, while carbon
-fiber cut link mass and let the wiring route internally through hollow tubes.
-Three links collapse to a 16.877 by 2.744 in stow profile.
+I designed the arm around two constraints that fight each other: it has to reach
+30 in across the sponsor's approved envelope, and it has to fold small enough to
+enter through the same port profile as the chassis. Every inch of reach costs
+actuator torque twice, once for the payload and once for the arm's own weight at
+that radius, and every actuator sized up to carry it adds its own weight back.
+At 50 in that loop diverged into motors the budget could not carry; at 30 in it
+closed inside the available stepper torque range while still meeting the
+requirement. Moving the links from aluminum to carbon fiber tube broke the
+spiral a second way, cutting link mass and routing the wiring internally through
+the hollow sections instead of hanging it off the outside. The folding geometry
+came out at three links that nest against each other into a 16.877 by 2.744 in
+stow profile, which is what lets a 30 in arm enter through an opening shorter
+than itself.
 
 <DataTable {...actuators} />
 

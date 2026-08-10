@@ -172,15 +172,26 @@ function collectUnresolved() {
     });
   });
 
-  // Unpublished video slots.
+  // Video slots with no player at all (no local file AND no Drive id).
   const vids = readFileSync(join(SRC, 'data', 'videos.ts'), 'utf8');
-  const pending = [...vids.matchAll(/origin:\s*'([^']+)'/g)].map((m) => m[1]);
-  const unpublished = (vids.match(/file:\s*null/g) ?? []).length;
-  if (unpublished > 0) {
+  const entries = vids.split(/\n  \w+: \{/).slice(1);
+  const dark = entries.filter(
+    (e) => /file:\s*null/.test(e) && /drive:\s*null/.test(e),
+  ).length;
+  if (dark > 0) {
     items.push({
       where: 'src/data/videos.ts',
-      subject: `${unpublished} demo clips not yet published`,
-      questions: pending.map((p) => `Shareable file or link for ${p}`),
+      subject: `${dark} demo clips with no player`,
+      questions: ['Provide a Drive id or a local file for each'],
+    });
+  }
+  if (/drive:\s*'/.test(vids)) {
+    items.push({
+      where: 'src/data/videos.ts',
+      subject: 'Drive-embedded clips',
+      questions: [
+        'Confirm the Design Defense folder is shared as anyone-with-link, or the embeds show a request-access screen to visitors',
+      ],
     });
   }
 

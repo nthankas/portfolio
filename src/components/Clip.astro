@@ -2,16 +2,15 @@
 import { videos, type VideoId } from '../data/videos';
 
 /**
- * Demo video slot.
+ * Demo video slot. Three states, in order of preference:
  *
- * The nine FORTIS clips are not yet published, so each slot renders a typed
- * placeholder describing what the clip shows. The placeholder is content in its
- * own right, not a "coming soon" message: it states what was demonstrated, which
- * is a fact traceable to the brief, and never implies footage is present.
- *
- * Once a file lands in public/video/, set `file` on the entry in
- * src/data/videos.ts and the same slot renders the real player with a poster
- * frame, preload="none" and no autoplay.
+ *  1. A local file in public/video/ renders a native player with a poster,
+ *     preload="none", muted, no autoplay.
+ *  2. A Drive file id renders Drive's preview player in a lazy-loaded iframe,
+ *     so the clip streams from the owner's Drive without being re-hosted and
+ *     costs nothing at page load. Requires the file to be link-shared.
+ *  3. Neither: the slot renders its caption as a typed description of what was
+ *     demonstrated. Never a "coming soon" placeholder.
  */
 
 interface Props {
@@ -32,13 +31,29 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           muted
           playsinline
           preload="none"
-          poster={`${base}/video/${clip.poster}`}
+          poster={clip.poster ? `${base}/video/${clip.poster}` : undefined}
           width="1000"
           height="562"
         >
           <source src={`${base}/video/${clip.file}`} type="video/mp4" />
           Your browser cannot play this clip.
         </video>
+        <figcaption>
+          {clip.caption}
+          <span class="figcaption__source">Source: {clip.source}</span>
+        </figcaption>
+      </figure>
+    ) : clip.drive ? (
+      <figure>
+        <iframe
+          src={`https://drive.google.com/file/d/${clip.drive}/preview`}
+          loading="lazy"
+          allow="fullscreen"
+          allowfullscreen
+          title={clip.caption}
+          width="1000"
+          height="562"
+        />
         <figcaption>
           {clip.caption}
           <span class="figcaption__source">Source: {clip.source}</span>

@@ -44,7 +44,14 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
       rel="preload"
       as="font"
       type="font/woff2"
-      href={withBase('/fonts/ibm-plex-sans-latin-wght-normal.woff2')}
+      href={withBase('/fonts/instrument-sans-latin-wght-normal.woff2')}
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={withBase('/fonts/instrument-serif-latin-400-normal.woff2')}
       crossorigin="anonymous"
     />
     <link
@@ -54,13 +61,7 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
       href={withBase('/fonts/ibm-plex-mono-latin-400-normal.woff2')}
       crossorigin="anonymous"
     />
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      href={withBase('/fonts/ibm-plex-mono-latin-600-normal.woff2')}
-      crossorigin="anonymous"
-    />
+
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />

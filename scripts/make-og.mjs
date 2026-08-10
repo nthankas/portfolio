@@ -46,8 +46,8 @@ const dataUri = (file) =>
   `data:font/woff2;base64,${readFileSync(join(FONTS, file)).toString('base64')}`;
 
 const monoRegular = dataUri('ibm-plex-mono-latin-400-normal.woff2');
-const monoSemibold = dataUri('ibm-plex-mono-latin-600-normal.woff2');
-const sansVariable = dataUri('ibm-plex-sans-latin-wght-normal.woff2');
+const displaySerif = dataUri('instrument-serif-latin-400-normal.woff2');
+const sansVariable = dataUri('instrument-sans-latin-wght-normal.woff2');
 
 const esc = (s) =>
   String(s)
@@ -59,8 +59,8 @@ function page({ kind, title, summary, chips }) {
   return `<!doctype html>
 <html><head><meta charset="utf-8"><style>
   @font-face { font-family: 'IBM Plex Mono'; src: url('${monoRegular}') format('woff2'); font-weight: 400; }
-  @font-face { font-family: 'IBM Plex Mono'; src: url('${monoSemibold}') format('woff2'); font-weight: 600; }
-  @font-face { font-family: 'IBM Plex Sans'; src: url('${sansVariable}') format('woff2-variations'); font-weight: 100 700; }
+  @font-face { font-family: 'Instrument Serif'; src: url('${displaySerif}') format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'Instrument Sans'; src: url('${sansVariable}') format('woff2-variations'); font-weight: 400 700; }
 
   :root {
     --paper: #f7f8f9;
@@ -78,7 +78,7 @@ function page({ kind, title, summary, chips }) {
     background: var(--paper);
     padding: 56px 80px 44px;
     display: flex; flex-direction: column;
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Instrument Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -92,13 +92,13 @@ function page({ kind, title, summary, chips }) {
   }
 
   h1 {
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 600;
-    font-size: ${title.length > 22 ? 56 : 74}px;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: ${title.length > 22 ? 72 : 96}px;
+    line-height: 1.02;
+    letter-spacing: -0.01em;
     color: var(--ink);
-    margin-top: 76px;
+    margin-top: 64px;
   }
 
   .summary {
@@ -131,7 +131,7 @@ function page({ kind, title, summary, chips }) {
     font-size: 18px;
   }
 
-  footer .mark { font-weight: 600; letter-spacing: 0.16em; color: var(--ink); }
+  footer .mark { font-family: 'Instrument Serif', serif; font-size: 24px; letter-spacing: 0; color: var(--ink); }
   footer .tag { color: var(--muted); }
   .dot { color: var(--accent); }
 </style></head>
@@ -141,7 +141,7 @@ function page({ kind, title, summary, chips }) {
   <p class="summary">${esc(summary)}</p>
   <div class="chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</div>
   <footer>
-    <span class="mark">NIKHIL THANKASALA<span class="dot">.</span></span>
+    <span class="mark">Nikhil Thankasala<span class="dot">.</span></span>
     <span class="tag">robotics software<span class="dot">.</span></span>
   </footer>
 </body></html>`;
