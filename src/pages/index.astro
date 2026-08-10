@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectEntry from '../components/ProjectEntry.astro';
 import DataTable from '../components/DataTable.astro';
+import FigurePair from '../components/FigurePair.astro';
 import { experience, education } from '../data/experience';
 import { skills } from '../data/skills';
 import { repoIndex } from '../data/repos';
@@ -69,6 +70,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         </div>
       </dl>
     </section>
+
+    <!-- Hardware, immediately: the built robot and the simulation it came
+         from, before any prose asks to be believed. -->
+    <div class="hero-strip">
+      <FigurePair ids={['fortis-chassis-built', 'fortis-isaac-viewport']} eager />
+    </div>
 
     <!-- -------------------------------------------------------- currently -->
     <section class="section" aria-labelledby="currently-heading">

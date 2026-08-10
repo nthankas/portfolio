@@ -38,6 +38,11 @@ const projects = defineCollection({
     repo: z.string().url().optional(),
     /** Slug of the dedicated case study route, when one exists. */
     caseStudy: z.string().optional(),
+    /**
+     * Figure id (see src/lib/figures.ts) shown in the card while collapsed,
+     * so the projects section carries imagery before anything is expanded.
+     */
+    lead: z.string().optional(),
     artifacts: z.array(artifact).default([]),
     status,
     /** Human-readable list of what is unresolved. Drives `npm run check:gaps`. */

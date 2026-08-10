@@ -1,5 +1,6 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
+import Figure from './Figure.astro';
 
 interface Props {
   entry: CollectionEntry<'projects'>;
@@ -22,6 +23,15 @@ const headingId = `project-${entry.id}`;
         <span class="entry__index">{num}</span>
         <h3 class="entry__title" id={headingId}>{d.title}</h3>
         <p class="entry__thesis">{d.thesis}</p>
+        {
+          /* Lead figure: visible while the card is collapsed, so the projects
+             section carries real imagery before anything is expanded. */
+          d.lead && (
+            <div class="entry__lead">
+              <Figure id={d.lead} width={720} />
+            </div>
+          )
+        }
         <ul class="chips" aria-label={`Stack for ${d.title}`}>
           {d.stack.map((s) => <li>{s}</li>)}
         </ul>

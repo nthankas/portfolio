@@ -486,6 +486,25 @@ figcaption .figcaption__source {
   margin: 1.9rem 0;
 }
 
+/* The hardware strip under the intro runs the full shell width. */
+.hero-strip {
+  margin-top: 2.5rem;
+}
+
+.hero-strip .figure-pair {
+  margin: 0;
+  align-items: start;
+}
+
+/* Uniform frame across the strip: a portrait photo and a widescreen capture
+   crop to the same ratio so the two figures read as one row. */
+.hero-strip .figure-pair img {
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  width: 100%;
+  height: auto;
+}
+
 @media (max-width: 46rem) {
   .figure-pair {
     grid-template-columns: 1fr;
@@ -597,6 +616,16 @@ figcaption .figcaption__source {
 .entry__toggle {
   border-bottom: 1px solid currentColor;
   padding-bottom: 0.15rem;
+}
+
+/* Lead figure inside the collapsed card. Tighter margins than a body figure,
+   since it sits between the thesis and the chips. */
+.entry__lead {
+  max-width: var(--measure);
+}
+
+.entry__lead figure {
+  margin: 1.1rem 0 0.9rem;
 }
 
 summary:hover .entry__toggle {

@@ -165,6 +165,37 @@ const registry: Record<string, Entry> = {
     source: 'FORTIS fabrication photograph.',
   },
 
+  'fortis-isaac-viewport': {
+    file: 'fortis/fortis-orbit-sim-torque-vs-speed.jpg',
+    alt: 'Screenshot of the Isaac Sim viewport looking straight down into the reactor model. The vessel is a ring of tiled floor panels around a dark centre bore, and the robot sits on the outer floor at the bottom of the ring, small against the vessel, oriented for a toroidal orbit.',
+    caption:
+      'The simulation the drivetrain numbers came from: the chassis on the reactor floor in Isaac Sim, viewed from above, mid orbit.',
+    source: 'Isaac Sim capture, orbit test.',
+  },
+
+  'fortis-wiring-asbuilt': {
+    file: 'fortis/fortis-internal-wiring-as-built.png',
+    alt: 'Top-down photograph of the finished chassis with the top skin removed. Four omni wheels sit at the corners. Inside the octagonal aluminum frame, four motor controllers sit at the corners beside their motors, and the centre channel carries the harness: red power runs, black data cables and white USB lines tied off to the frame, with four cameras mounted on the outside faces.',
+    caption:
+      'The as-built interior. The packaging follows the CAD layout: controllers at the corners beside their motors, harness down the centre channel, one camera per face.',
+    source: 'FORTIS fabrication photograph.',
+  },
+
+  'fortis-machined-parts': {
+    file: 'fortis/fortis-endoskeleton-build-a.png',
+    alt: 'Photograph of chassis parts in fabrication on a steel table. Lengths of aluminum square tube are marked up in red with joint labels and weld arrows. Beside them sits a machined camera mount plate with a large circular bore and countersunk holes, next to sheet stock scribed with the octagon profile. A partially welded frame corner is visible at the left edge.',
+    caption:
+      'Frame stock marked for welding and the first machined camera plate. Every tube carries its joint label because the octagon only closes if the miter sequence is followed.',
+    source: 'FORTIS fabrication photograph.',
+  },
+
+  'fortis-welded-ring': {
+    file: 'fortis/fortis-fabrication-assembled-chassis.png',
+    alt: 'Photograph of the welded aluminum endoskeleton ring laid flat on cardboard: an octagonal frame of square tube with mounting flanges riveted along the faces, before any components are installed.',
+    caption: 'The endoskeleton ring after welding, before anything was mounted to it.',
+    source: 'FORTIS fabrication photograph.',
+  },
+
   // -------------------------------------------------------------- WALL-E ---
 
   'walle-hsm-whiteboard': {
@@ -196,6 +227,14 @@ const registry: Record<string, Entry> = {
     alt: 'CAD render of the robot, styled after the film character it is named for: a boxy yellow and grey laser-cut body with a binocular head on top, a single rear wheel visible, and two flat gripper arms extending forward on rails. A red cube sits between the open arms.',
     caption:
       'Chassis mockup with a block presented between the gripper arms. That fixed presentation distance is what made color classification repeatable.',
+    source: 'ECE 118/218 final report.',
+  },
+
+  'walle-drawing': {
+    file: 'walle/walle-cad-drawing.png',
+    alt: 'Four-view assembly drawing of the robot: front view with the binocular head and both gripper arms, isometric view approaching a block, top view showing the internal bay layout between the drive wheels, and side view showing the arm reach past the chassis front.',
+    caption:
+      'Assembly drawing of the final build. The gripper arms and the block presentation distance visible in the side view are the geometry that fixed the color sensing standoff.',
     source: 'ECE 118/218 final report.',
   },
 

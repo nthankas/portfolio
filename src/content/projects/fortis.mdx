@@ -17,6 +17,7 @@ stack:
   - Teensy 4.1
 repo: https://github.com/nthankas/FORTIS
 caseStudy: fortis
+lead: fortis-wiring-asbuilt
 artifacts:
   - label: Repository
     href: https://github.com/nthankas/FORTIS
@@ -28,7 +29,6 @@ artifacts:
     note: nine clips exist, links pending
 status: needs_confirmation
 openQuestions:
-  - Arm degree-of-freedom count disagrees between the July 2026 resume and the design defense deck
   - Shareable links for the nine demo videos
 description: 'FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I led the software, simulation and vision work: the ROS 2 architecture, the Isaac Sim studies that sized the drivetrain and arm, and the perception and state estimation stack.'
 ---
@@ -116,6 +116,8 @@ wheel trends consistently higher than the other three because the arm center of
 gravity sits forward of chassis center. The asymmetry is expected and bounded:
 the orbit runs in a fixed direction, so the load biases onto the front pair and
 stays there.
+
+<Figure id="fortis-isaac-viewport" />
 
 <Clip id="orbitSim" />
 

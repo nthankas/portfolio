@@ -14,6 +14,7 @@ stack:
   - IR and color sensing
 repo: https://github.com/nthankas/WallE_Robot
 caseStudy: walle
+lead: walle-cad
 artifacts:
   - label: Repository
     href: https://github.com/nthankas/WallE_Robot
@@ -78,7 +79,7 @@ for what it does well, frontal proximity to a block during the approach, where
 the target is on-axis by construction, and came out of the localization role
 entirely.
 
-**Colour classification.** The color sensor was strongly sensitive to both
+**Color classification.** The color sensor was strongly sensitive to both
 standoff distance and ambient lighting. The fix was split across domains:
 chassis geometry was changed so a block is always presented at a fixed short
 standoff inside the calibrated range, and thresholds were then tuned on
@@ -109,4 +110,4 @@ for functional parts only, held to 14.244 in3 against a 30 in3 budget. My
 teammates owned this work; the one software-relevant consequence is the gripper
 standoff geometry that made color classification repeatable.
 
-<Figure id="walle-cad" />
+<Figure id="walle-drawing" />

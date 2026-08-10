@@ -2,6 +2,7 @@
 import { getEntry } from 'astro:content';
 import CaseStudy from '../../layouts/CaseStudy.astro';
 import Figure from '../../components/Figure.astro';
+import FigurePair from '../../components/FigurePair.astro';
 import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
 import {
@@ -301,6 +302,8 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <Figure id="fortis-orbit-torque" />
 
+  <Figure id="fortis-isaac-viewport" />
+
   <p>
     One detail in that plot is worth reading rather than skimming. The front-left
     wheel trends consistently higher than the other three throughout the sweep,
@@ -373,6 +376,8 @@ if (!entry) throw new Error('Missing project entry: fortis');
   </p>
 
   <Figure id="fortis-block-diagram" />
+
+  <Figure id="fortis-wiring-asbuilt" />
 
   <h3>Perception</h3>
 
@@ -452,6 +457,8 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <Clip id="portEntry" />
   <Clip id="payloadHold" />
   <Clip id="holonomic" />
+
+  <FigurePair ids={['fortis-machined-parts', 'fortis-welded-ring']} />
 
   <Figure id="fortis-chassis-front" />
   <Figure id="fortis-chassis-built" />
