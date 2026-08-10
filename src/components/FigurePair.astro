@@ -1,0 +1,32 @@
+---
+import { Image } from 'astro:assets';
+import { getFigure } from '../lib/figures';
+
+interface Props {
+  ids: [string, string];
+}
+
+const { ids } = Astro.props;
+const pair = ids.map((id) => getFigure(id));
+---
+
+<div class="figure-pair">
+  {
+    pair.map((fig) => (
+      <figure>
+        <Image
+          src={fig.src}
+          alt={fig.alt}
+          width={620}
+          densities={[1, 2]}
+          loading="lazy"
+          decoding="async"
+        />
+        <figcaption>
+          {fig.caption}
+          <span class="figcaption__source">Source: {fig.source}</span>
+        </figcaption>
+      </figure>
+    ))
+  }
+</div>

@@ -1,0 +1,78 @@
+---
+import Base from './Base.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'projects'>;
+  /** Overrides the entry thesis for the standfirst, which runs to two sentences. */
+  standfirst: string;
+}
+
+const { entry, standfirst } = Astro.props;
+const d = entry.data;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Base
+  title={`${d.title} · Nikhil Thankasala`}
+  description={d.description}
+  ogImage={`/og/${entry.id}.png`}
+>
+  <article class="shell">
+    <header class="case-head split">
+      <div>
+        <a class="backlink" href={`${base}/#projects`}>All projects</a>
+        <h1>{d.title}</h1>
+        <p class="lede">{standfirst}</p>
+      </div>
+      <dl class="meta">
+        <div>
+          <dt>Role</dt>
+          <dd>{d.role}</dd>
+        </div>
+        <div>
+          <dt>Context</dt>
+          <dd>{d.org}</dd>
+        </div>
+        <div>
+          <dt>Dates</dt>
+          <dd>{d.dates}</dd>
+        </div>
+        {
+          d.team && (
+            <div>
+              <dt>Team</dt>
+              <dd>{d.team}</dd>
+            </div>
+          )
+        }
+        <div>
+          <dt>Stack</dt>
+          <dd>{d.stack.join(', ')}</dd>
+        </div>
+      </dl>
+    </header>
+
+    <div class="case-body">
+      <slot />
+
+      <h2>Artifacts</h2>
+      <ul class="contact-list">
+        {
+          d.artifacts.map((a) => (
+            <li>
+              <span class="label">{a.label}</span>
+              {a.href ? (
+                <a href={a.href} rel="noopener">
+                  {a.href.replace(/^https?:\/\//, '')}
+                </a>
+              ) : (
+                <span style="color:var(--ink-muted)">{a.note ?? 'not yet published'}</span>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </article>
+</Base>

@@ -1,0 +1,110 @@
+---
+title: Leaf Me Alone
+priority: 2
+thesis: 'Water takes time to reach the sensor, so a controller that reads immediately after watering reads a lie and overwaters. The control strategy was designed around that delay rather than around a threshold.'
+role: Sensor characterization, signal chain and control
+org: UC Santa Cruz ECE 167, sensing and signal processing
+dates: Winter 2026
+team: Team of three
+stack:
+  - STM32F411RE
+  - Embedded C
+  - Kalman filter
+  - ADC
+  - Timer capture
+caseStudy: leaf-me-alone
+artifacts:
+  - label: Project report
+    pending: true
+    note: PDF not present in the supplied asset bundle
+status: needs_confirmation
+openQuestions:
+  - No repository for this project appeared in the live GitHub pull
+  - Report PDF was referenced in the brief but is not in the asset bundle
+  - Division of work across the three-person team
+description: 'A closed-loop autonomous irrigation controller on an STM32F411RE, built around soil percolation delay. Two candidate sensors were characterized and ruled out on measured grounds before a replacement was chosen.'
+---
+
+import DataTable from '../../components/DataTable.astro';
+
+Most hobby irrigation systems threshold a raw sensor value and switch a pump.
+That fails for a physical reason. Water takes time to percolate to the sensor,
+so a reading taken immediately after watering reflects the soil before the water
+arrived, and the controller keeps watering against a stale measurement. This
+system was designed around the delay with a pulse-and-soak strategy: deliver a
+short pulse, wait for percolation, re-read, and only then decide whether to
+pulse again.
+
+### Sensor selection as a characterization study
+
+Both moisture-sensing candidates in the course kit were evaluated experimentally
+and ruled out on measured grounds before a replacement was chosen.
+
+A capacitive touch sensor was proposed to infer moisture from oscillation
+period. Two measurable properties disqualified it. The first is timescale: soil
+moisture moves over hours to days through evaporation and uptake, and the sensor
+could not resolve gradual change between control updates even though it cleanly
+separated fully saturated from fully dry on the bench. The second is dynamic
+range: period variation between practical wet and dry conditions fell inside the
+sensor's own noise floor, so repeat trials at the same true moisture returned
+inconsistent readings.
+
+A piezoelectric element was proposed to read soil compaction as a dryness proxy.
+Testing showed it is a charge generator responding to dynamic force rather than
+static load. Inserted and left stationary it produced a brief transient and
+settled to zero regardless of moisture or compaction.
+
+Both were replaced with a dedicated capacitive soil moisture probe. That was
+chosen over the cheaper resistive style specifically because resistive probes
+pass DC through the soil and corrode by electrolysis.
+
+### Signal chain and calibration
+
+The probe's analog output is read on a 12-bit converter and passed through a
+Kalman filter with process and measurement noise tuned empirically, which holds
+sample-to-sample variation under 1 percent volumetric water content in a stable
+environment.
+
+Calibration endpoints were measured directly: 1210 counts submerged and 2523
+counts in open air, a 1313-count dynamic range. Those endpoints map onto an
+approximate 10 to 50 percent volumetric water content scale for potting soil
+rather than a naive 0 to 100 percent, because 100 percent volumetric water
+content is physically impossible in soil. The endpoint values come from
+published soil-science reference ranges.
+
+Reservoir level is measured by an ultrasonic rangefinder mounted above the
+reservoir, driven by a timer-based state machine with interrupt edge capture on
+the echo line. Time of flight converts to distance through a least-squares fit
+against measured known heights, is smoothed with a four-sample moving average,
+and maps to a 0 to 100 percent level through a two-point field calibration.
+
+### Control
+
+The controller is a four-state machine updating every 500 ms: calibrate, idle,
+water and soak. Idle reads moisture and reservoir level, and enters watering
+only when the soil is below the trigger threshold and the reservoir is above its
+own floor. Watering runs a single 500 ms pump pulse. Soaking waits 10 seconds
+for percolation, re-reads, and either returns to idle on reaching target or
+issues another pulse, with a hard cap of 10 pulses.
+
+<DataTable
+  caption="Validation results"
+  columns={[{ head: 'Test' }, { head: 'Result' }]}
+  rows={[
+    ['Reservoir level accuracy, 5 known heights, 3 readings each', 'all within +/-3 mm against a +/-5 mm goal'],
+    ['Integrated watering, 10 trials', '10 of 10 reached target within +/-5 percent VWC'],
+    ['Pulse efficiency', '9 of 10 trials converged on a single 500 ms pulse'],
+    ['Overwatering cap', 'verified by isolating the sensor from delivered water'],
+    ['Low-reservoir inhibit', 'pump refused to run below threshold, resumed after refill'],
+    ['Control latency', 'approximately 500 ms, bounded by the update interval'],
+  ]}
+  highlight={[[1, 1]]}
+/>
+
+### Scope of the measurement
+
+Volumetric water content here is approximate. True calibration requires
+gravimetric oven-dry analysis, which was not performed. The endpoints are
+specific to general potting soil and would move for a different medium, and
+moisture is sampled at a single point rather than across the root zone. Those
+bounds are stated because a moisture number without them is not a measurement.

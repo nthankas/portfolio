@@ -1,0 +1,203 @@
+---
+import { getEntry } from 'astro:content';
+import CaseStudy from '../../layouts/CaseStudy.astro';
+import Figure from '../../components/Figure.astro';
+import FigurePair from '../../components/FigurePair.astro';
+import DataTable from '../../components/DataTable.astro';
+
+const entry = await getEntry('projects', 'walle');
+if (!entry) throw new Error('Missing project entry: walle');
+---
+
+<CaseStudy
+  entry={entry}
+  standfirst="An autonomous robot that acquires colored blocks from three field zones and sorts them by color. The work worth writing up is architectural: every zone runs the same sub-machine, and a sensor characterization study replaced the entire navigation approach."
+>
+  <h2>Context and constraints</h2>
+
+  <p>
+    A mechatronics course project on an 8-bit-era microcontroller with a fixed
+    parts kit, a fixed field, and a fixed volume budget for 3D printed material.
+    The robot has to leave a base line, acquire blocks from three separate field
+    zones, classify each block by color, and deliver it to the matching drop
+    zone, all autonomously and within a run time limit.
+  </p>
+
+  <p>
+    The constraint that shapes the software is the platform. There is no
+    operating system, no threads, and not enough headroom to poll sensors in a
+    main loop while also running motion. Anything that blocks stops the whole
+    robot.
+  </p>
+
+  <Figure id="walle-field" eager />
+
+  <h2>Role</h2>
+
+  <p>
+    I was the sole software developer on a three-person team. I owned the state
+    machine architecture, all sensor integration and filtering, and the drive
+    routines. My teammates owned the mechanical design, the chassis fabrication
+    and the gripper. Where their work is mentioned below it is because it changed
+    a software problem.
+  </p>
+
+  <h2>Requirements decomposition</h2>
+
+  <DataTable
+    caption="Requirements and the mechanism that satisfies each"
+    columns={[{ head: 'Requirement' }, { head: 'Mechanism' }]}
+    rows={[
+      ['Traverse between zones without odometry', 'reflective infrared line following along taped paths'],
+      ['Stop at a repeatable distance from a block', 'frontal ultrasonic proximity with hysteresis'],
+      ['Classify block color reliably', 'fixed mechanical standoff plus threshold classification with confirmation'],
+      ['Ignore decoy blocks', 'stateless skip, no flag retained'],
+      ['Never block on a sensor', 'services post discrete events into a shared queue'],
+      ['Reorder or add a field zone cheaply', 'identical acquisition sub-machine per zone'],
+    ]}
+  />
+
+  <h2>Design decisions</h2>
+
+  <h3>One acquisition sub-machine, parameterised per zone</h3>
+
+  <p>
+    The top-level state machine sequences four phases: three zone-acquisition
+    phases and a sort phase, terminating after the final zone. Each zone phase
+    delegates to a sub-machine implementing one consistent acquisition strategy:
+    advance under line-sensor supervision, halt at the calibrated sensing
+    distance, classify the block, then either initiate a grab and report the
+    color upward, or skip and continue.
+  </p>
+
+  <p>
+    The alternative was a bespoke machine per zone, which is what the field
+    layout naturally suggests since the three zones are reached differently. That
+    lost on maintenance cost: three bespoke machines means a behavior fix has to
+    be applied three times and can be applied inconsistently twice. Because the
+    zone sub-machines are the same machine with different parameters, reordering
+    the field or adding a zone is an edit to the top-level sequence, and the
+    behavior inside a zone is written once.
+  </p>
+
+  <p>
+    The sort phase dispatches on the reported color into two symmetric flows
+    that turn toward the correct drop zone, release, and realign to the line
+    before handing control back for the next stage.
+  </p>
+
+  <h3>Event-driven sensing, not polled</h3>
+
+  <p>
+    Line detection and color classification each run as services that post
+    discrete events into a shared queue, so the state machines never poll a
+    sensor and never block on one. On a platform with no scheduler this is what
+    makes concurrent sensing and motion possible at all, and it is what allows a
+    settling interval to be expressed as a timer event rather than a delay loop.
+  </p>
+
+  <h3>Decoys are handled statelessly</h3>
+
+  <p>
+    A decoy detection transitions the machine onward with no flag and no memory
+    of having seen it. The alternative, tracking which decoys had been
+    encountered, buys nothing: nothing downstream ever needs to know. Not
+    tracking it removes an entire class of latch-up state, where the machine
+    holds a flag it can never clear and refuses to re-enter a zone, at zero cost
+    to behavior.
+  </p>
+
+  <h2>Sensing work</h2>
+
+  <h3>Rangefinder characterization replaced the navigation approach</h3>
+
+  <p>
+    The original concept swept an ultrasonic rangefinder across the field to
+    localize randomly scattered blocks, which is the obvious use of the only
+    ranging sensor in the kit. Bench characterization showed the physical limit
+    clearly: the sensor returns accurate range only when the target lies near its
+    acoustic axis. During a pivoting sweep the wavefront strikes objects at
+    oblique angles and scatters away from the receiver, so detection collapses
+    outside a narrow frontal cone and the returns that do arrive are not
+    trustworthy bearings.
+  </p>
+
+  <p>
+    The choice at that point was to filter around the sensor or to stop asking it
+    for a measurement it cannot make. I rebuilt navigation around reflective
+    infrared line following along taped paths, which turns localization into a
+    sequence of discrete line events with no bearing estimate needed at all. The
+    rangefinder stayed in the system for what it does well, frontal proximity to
+    a block during the approach, where the target is on-axis by construction, and
+    came out of the localization role entirely. Its readings there are low-pass
+    filtered with hysteresis so a noisy sample cannot bounce the machine between
+    approach states.
+  </p>
+
+  <FigurePair ids={['walle-hsm-whiteboard', 'walle-hsm-final']} />
+
+  <p>
+    Those two diagrams are the clearest artifact on this project. The first is
+    the architecture as planned, organized around a search sub-machine doing left
+    and right sweeps. The second is the architecture that shipped, where the
+    equivalent states are driven by line events instead. The result of the sensor
+    study is visible as a structural change, not as a parameter change.
+  </p>
+
+  <h3>Colour classification, constrained mechanically</h3>
+
+  <p>
+    The color sensor was strongly sensitive to both standoff distance and
+    ambient lighting, and no threshold set survived both varying together. The
+    fix was split across domains rather than solved entirely in software: the
+    chassis geometry was changed so a block is always presented at a fixed short
+    standoff inside the calibrated range, which removed one of the two variables
+    outright. Thresholds were then tuned on empirical data collected under
+    consistent lighting.
+  </p>
+
+  <p>
+    Two guards make the classification commit only when it should. A reading must
+    show a minimum separation between channels before it counts as a color at
+    all, which rejects ambiguous readings rather than forcing them into the
+    nearest class, and a classification must repeat across consecutive samples
+    before the event is posted. Constraining the mechanical problem is what made
+    the software problem tractable.
+  </p>
+
+  <Figure id="walle-cad" />
+
+  <h3>Drivetrain asymmetry</h3>
+
+  <p>
+    The two drive motors were measurably unmatched, producing heading drift on
+    straight runs and error on turns. I characterized the drift through
+    controlled runs and compensated it with per-direction drive-level offsets in
+    the motion routines, which held alignment well enough for reliable line
+    acquisition. The honest upgrade path is encoder feedback in place of
+    hand-characterized compensation: the offsets are calibrated to these two
+    motors at this battery voltage and do not transfer.
+  </p>
+
+  <h3>Event pacing</h3>
+
+  <p>
+    Direction changes introduce mechanical settling transients that corrupt both
+    line and color readings if the next event is processed immediately. I
+    introduced settling intervals between transitions and sensitive reads and
+    tuned them against the platform: too short and the machine decides on a
+    reading taken mid-transient, too long and the run time budget suffers.
+  </p>
+
+  <Figure id="walle-wiring" />
+
+  <h2>Mechanical context</h2>
+
+  <p>
+    A 200 by 200 mm laser-cut tab-and-slot plywood chassis, with 3D printing
+    reserved for functional parts only and held to 14.244 in3 against a 30 in3
+    budget. My teammates owned this work. The one consequence that reaches the
+    software is the gripper standoff geometry described above, which is what made
+    color classification repeatable.
+  </p>
+</CaseStudy>

@@ -1,0 +1,114 @@
+---
+import '../styles/global.css';
+import { owner, siteMeta, deploy, resume } from '../site.config';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path of the generated OG image, relative to the site base. */
+  ogImage?: string;
+  /** Rendered into <link rel="canonical">. Defaults to the current URL. */
+  canonicalPath?: string;
+}
+
+const { title, description, ogImage, canonicalPath } = Astro.props;
+
+const base = import.meta.env.BASE_URL;
+const withBase = (p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+
+const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site ?? deploy.site);
+const ogUrl = ogImage ? new URL(withBase(ogImage), Astro.site ?? deploy.site) : undefined;
+
+const nav = [
+  { href: '#projects', label: 'projects' },
+  { href: '#experience', label: 'experience' },
+  { href: '#skills', label: 'skills' },
+  { href: '#contact', label: 'contact' },
+];
+
+// On case study routes the in-page anchors do not exist, so they point home.
+const isHome = Astro.url.pathname.replace(/\/$/, '') === base.replace(/\/$/, '');
+const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={withBase('/fonts/ibm-plex-sans-latin-wght-normal.woff2')}
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={withBase('/fonts/ibm-plex-mono-latin-400-normal.woff2')}
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={withBase('/fonts/ibm-plex-mono-latin-600-normal.woff2')}
+      crossorigin="anonymous"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:site_name" content={owner.name} />
+    {ogUrl && <meta property="og:image" content={ogUrl.href} />}
+    {ogUrl && <meta property="og:image:width" content="1200" />}
+    {ogUrl && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content={ogUrl ? 'summary_large_image' : 'summary'} />
+
+    <meta name="author" content={owner.name} />
+    <meta name="theme-color" content="#fbfaf6" />
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+    <link rel="sitemap" href={withBase('/sitemap-index.xml')} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="shell site-header__inner">
+        <a class="wordmark" href={withBase('/')}>
+          Nikhil Thankasala<span class="sigil">.</span>
+        </a>
+        <nav class="site-nav" aria-label="Sections">
+          {nav.map((n) => <a href={navHref(n.href)}>{n.label}</a>)}
+          {
+            /* Until a resume file is chosen, the resume link resolves to email
+               rather than to a stub page. See `resume` in src/site.config.ts. */
+            resume.file ? (
+              <a href={withBase(`/${resume.file}`)}>resume</a>
+            ) : (
+              <a href={`mailto:${owner.email}?subject=Resume%20request`}>resume</a>
+            )
+          }
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell" style="display:flex;flex-wrap:wrap;gap:0.4rem 1.5rem;justify-content:space-between;width:100%;">
+        <span>{owner.name} &middot; {siteMeta.role}</span>
+        <span>{owner.location}</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,933 @@
+/*
+ * Design system.
+ *
+ * Register: a light, typographic engineering document. Monospace carries the
+ * identity (wordmark, labels, all numerals, table data, chips, metadata); a
+ * serif carries prose. Structure comes from hairline rules, letterspaced
+ * uppercase labels and hanging indents, never from shadowed cards.
+ *
+ * Two marker types only: the hairline rule and the letterspaced label.
+ */
+
+/* ---------------------------------------------------------------- fonts -- */
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/fonts/ibm-plex-sans-latin-wght-normal.woff2') format('woff2-variations');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/fonts/ibm-plex-sans-latin-wght-italic.woff2') format('woff2-variations');
+  font-weight: 100 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* --------------------------------------------------------------- tokens -- */
+
+:root {
+  /* Cool neutral stock rather than warm paper, and a single deep technical
+     blue. Every ink below clears 7:1 against BOTH the page and the wash the
+     chips sit on. */
+  --paper: #f7f8f9;
+  --ink: #14171a; /* 16.92:1 on paper */
+  --ink-muted: #464d53; /* 8.07:1 on paper, 7.38:1 on wash */
+  --ink-soft: #4a5157; /* 7.58:1 on paper */
+  --rule: #d5d9dd;
+  --rule-strong: #aeb5bb;
+  --accent: #0a4488; /* 9.00:1 on paper, 8.22:1 on wash */
+  --accent-deep: #07356b;
+  --wash: #eceef0;
+
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Menlo', 'Consolas',
+    'Liberation Mono', monospace;
+  --serif: 'IBM Plex Sans', ui-sans-serif, system-ui, 'Segoe UI', 'Helvetica Neue',
+    sans-serif;
+
+  /* Prose measure: ~70 characters at the body size. */
+  --measure: 40rem;
+  /* Content column plus the narrow metadata column beside it. */
+  --meta-col: 12rem;
+  --gutter: 2.5rem;
+  --shell: calc(var(--measure) + var(--meta-col) + var(--gutter));
+
+  --step: 1.5rem;
+}
+
+/* ---------------------------------------------------------------- reset -- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Anchor targets clear the sticky header. */
+  scroll-padding-top: 4.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: 1.24;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0 0 1.05em;
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+ul,
+ol {
+  max-width: var(--measure);
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--accent-deep);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ------------------------------------------------------------ structure -- */
+
+.shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1.75rem;
+}
+
+/* The two-column body: prose left, metadata right. Collapses to one column
+   under the breakpoint, metadata first so it reads as a caption block. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, var(--measure)) var(--meta-col);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* --------------------------------------------------------------- header -- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: saturate(1.1);
+  border-bottom: 1px solid var(--rule);
+}
+
+.site-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  padding-block: 0.7rem;
+}
+
+.wordmark {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.wordmark:hover {
+  color: var(--accent);
+}
+
+.wordmark .sigil {
+  color: var(--accent);
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.15rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+.site-nav a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current='page'] {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* --------------------------------------------------------------- labels -- */
+
+/* Marker type 1 of 2: the letterspaced uppercase label. */
+.label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* Marker type 2 of 2: the hairline rule, used as a section head underline. */
+.section {
+  padding-top: 3.25rem;
+  margin-top: 1rem;
+}
+
+.section > .section__head {
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 0.6rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section__head h2 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.section__head .section__note {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+/* Editorial aside, set in the monospace face against a hanging rule rather
+   than a comment glyph. */
+.comment {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 0.75rem;
+  max-width: var(--measure);
+}
+
+/* ----------------------------------------------------------------- meta -- */
+
+/* Definition list used for the info panel and all metadata columns.
+   Hanging-indent register: label above, value below, hairline separated. */
+.meta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.775rem;
+  line-height: 1.5;
+}
+
+.meta > div + div {
+  border-top: 1px solid var(--rule);
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+}
+
+.meta dt {
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 0.2rem;
+}
+
+.meta dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.meta dd a {
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* Stacked links need a 24px touch target each, so they are list items with
+   enough leading rather than <br>-separated inline links. */
+.meta__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.meta__links a {
+  display: inline-block;
+  padding-block: 0.28rem;
+}
+
+.meta dd a:hover {
+  border-bottom-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- chips -- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chips li {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+  color: var(--ink-muted);
+  border: 1px solid var(--rule);
+  background: var(--wash);
+  padding: 0.13rem 0.42rem;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- tables -- */
+
+/* Tables are the visual centerpiece: hairline rules, no zebra striping,
+   generous padding, right-aligned numerics, units in the header. */
+.table-wrap {
+  overflow-x: auto;
+  margin: 1.6rem 0;
+  max-width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 28rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  padding-bottom: 0.6rem;
+}
+
+thead th {
+  border-bottom: 1px solid var(--ink);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.4rem 0.85rem 0.5rem 0;
+  vertical-align: bottom;
+  color: var(--ink);
+}
+
+tbody th {
+  font-weight: 400;
+  text-align: left;
+}
+
+tbody td,
+tbody th {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5rem 0.85rem 0.5rem 0;
+  vertical-align: top;
+}
+
+tbody tr:last-child td,
+tbody tr:last-child th {
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+th:last-child,
+td:last-child {
+  padding-right: 0;
+}
+
+/* Right-align numeric columns. Applied per-cell by the table markup. */
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* At most one data highlight, in the accent. */
+.hi {
+  color: var(--accent);
+}
+
+/* -------------------------------------------------------------- figures -- */
+
+figure {
+  margin: 1.9rem 0;
+  max-width: 100%;
+}
+
+figure img {
+  width: 100%;
+  border: 1px solid var(--rule);
+  /* Square corners, no shadow, no overlay. */
+}
+
+figcaption {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  margin-top: 0.55rem;
+  max-width: var(--measure);
+}
+
+/* Separated from the caption by size and leading rather than by going paler,
+   so the provenance line stays legible. */
+figcaption .figcaption__source {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+}
+
+.figure-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.9rem 0;
+}
+
+@media (max-width: 46rem) {
+  .figure-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.figure-pair figure {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- videos -- */
+
+.clip {
+  margin: 1.9rem 0;
+}
+
+.clip video {
+  width: 100%;
+  border: 1px solid var(--rule);
+  background: var(--wash);
+}
+
+.clip__pending {
+  border: 1px dashed var(--rule-strong);
+  background: var(--wash);
+  padding: 1.1rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+/* ----------------------------------------------------- disclosure cards -- */
+
+/* Native <details>. Works with JS disabled, keyboard accessible, and the
+   collapsed content stays in the DOM for in-page search and for print. */
+.entry {
+  border-top: 1px solid var(--rule);
+  padding: 1.5rem 0;
+}
+
+.entry:first-of-type {
+  border-top: 1px solid var(--rule-strong);
+}
+
+.entry > summary {
+  cursor: pointer;
+  list-style: none;
+  display: block;
+}
+
+.entry > summary::-webkit-details-marker {
+  display: none;
+}
+
+.entry__head {
+  display: grid;
+  grid-template-columns: minmax(0, var(--measure)) var(--meta-col);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .entry__head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+}
+
+.entry__index {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.08em;
+}
+
+.entry__title {
+  font-family: var(--mono);
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.entry__thesis {
+  margin: 0 0 0.75rem;
+  max-width: var(--measure);
+}
+
+.entry__toggle {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-top: 0.85rem;
+  display: inline-block;
+}
+
+.entry__toggle::before {
+  content: 'Read in full';
+}
+
+.entry[open] .entry__toggle::before {
+  content: 'Collapse';
+}
+
+/* A short rule under the label is the only affordance. No chevron, no glyph. */
+.entry__toggle {
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.15rem;
+}
+
+summary:hover .entry__toggle {
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.entry__body {
+  padding-top: 1.4rem;
+  max-width: 100%;
+}
+
+.entry__body h3 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 2rem 0 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--rule);
+  max-width: var(--measure);
+}
+
+.entry__body > *:first-child {
+  margin-top: 0;
+}
+
+.entry__body h3:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* ------------------------------------------------------------ list rows -- */
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+.rows > li {
+  border-top: 1px solid var(--rule);
+  padding: 1.35rem 0;
+}
+
+.rows > li:first-child {
+  border-top: 1px solid var(--rule-strong);
+}
+
+.row__org {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.15rem;
+}
+
+.row__title {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin: 0 0 0.7rem;
+}
+
+/* ---------------------------------------------------------- skill groups -- */
+
+.skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.6rem 2.5rem;
+}
+
+.skills section {
+  border-top: 1px solid var(--rule);
+  padding-top: 0.7rem;
+}
+
+.skills h3 {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 0.6rem;
+}
+
+.skills ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+
+/* ---------------------------------------------------------------- intro -- */
+
+.lede {
+  font-size: 1.22rem;
+  line-height: 1.5;
+  max-width: var(--measure);
+}
+
+.hero {
+  padding-top: 2.75rem;
+}
+
+h1 {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.hero h1 {
+  font-size: 1.35rem;
+}
+
+/* --------------------------------------------------------- case studies -- */
+
+.case-head {
+  padding-top: 2.75rem;
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 1.6rem;
+  margin-bottom: 2rem;
+}
+
+.backlink {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 1.25rem;
+}
+
+.backlink:hover {
+  color: var(--accent);
+}
+
+.backlink::before {
+  content: '\2190\00a0';
+}
+
+.case-body h2 {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 0.65rem;
+  margin: 3rem 0 1.1rem;
+  max-width: 100%;
+}
+
+.case-body h3 {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.9rem 0 0.5rem;
+  max-width: var(--measure);
+}
+
+.case-body > *:first-child {
+  margin-top: 0;
+}
+
+/* ------------------------------------------------------------- contacts -- */
+
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 2;
+}
+
+.contact-list .label {
+  display: inline-block;
+  min-width: 6.5rem;
+}
+
+/* ---------------------------------------------------------------- index -- */
+
+.index-table caption {
+  padding-bottom: 0.75rem;
+}
+
+/* --------------------------------------------------------------- footer -- */
+
+.site-footer {
+  margin-top: 4.5rem;
+  border-top: 1px solid var(--rule-strong);
+  padding: 1.25rem 0 3rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  justify-content: space-between;
+}
+
+/* ------------------------------------------------------------ utilities -- */
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--paper);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--accent);
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 0.5rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* No load animation. An opacity settle was tried and removed: with a backwards
+   fill the page holds at zero opacity until the animation starts, which reads
+   to auditing tools, and to a slow connection, as a page that never painted.
+   The site has no motion beyond the browser's own scrolling. */
+
+/* ---------------------------------------------------------------- print -- */
+
+@media print {
+  :root {
+    --paper: #fff;
+    --ink: #000;
+    --ink-muted: #333;
+    --rule: #bbb;
+    --rule-strong: #666;
+    --accent: #000;
+  }
+
+  body {
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  .site-header,
+  .site-footer,
+  .site-nav,
+  .skip-link,
+  .entry__toggle,
+  .clip__pending,
+  video {
+    display: none !important;
+  }
+
+  /* Every disclosure prints expanded regardless of its open state. Browsers
+     hide closed <details> content two different ways, so override both:
+     the newer ::details-content content-visibility, and the older
+     display-based hiding of the slotted children. */
+  .entry > summary {
+    cursor: auto;
+  }
+
+  details::details-content {
+    content-visibility: visible !important;
+    block-size: auto !important;
+  }
+
+  details:not([open]) > *:not(summary),
+  .entry__body {
+    display: block !important;
+  }
+
+  .shell {
+    max-width: none;
+    padding: 0;
+  }
+
+  .split,
+  .entry__head {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  /* Resolve link targets in print, since they cannot be clicked on paper. */
+  .case-body a[href^='http']::after,
+  .entry__body a[href^='http']::after {
+    content: ' <' attr(href) '>';
+    font-family: var(--mono);
+    font-size: 8pt;
+    word-break: break-all;
+  }
+
+  figure,
+  .table-wrap,
+  tr {
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  .section {
+    padding-top: 1.5rem;
+  }
+}
