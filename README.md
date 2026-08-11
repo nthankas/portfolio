@@ -86,7 +86,8 @@ Open every image before writing its alt text.
 
 Any content file whose frontmatter says `status: needs_confirmation` has one or
 more fields the owner still has to settle. They are listed in that file's
-`openQuestions` array, and `QUESTIONS.md` states each one in answerable form.
+`openQuestions` array, and the local working document `QUESTIONS.md` (kept out
+of the repository) states each one in answerable form.
 None of them render to the page: an unresolved field is a build-time warning,
 never a visible badge.
 
@@ -96,8 +97,8 @@ To resolve one:
 2. Edit the content.
 3. Delete the resolved entry from that file's `openQuestions`.
 4. When the array is empty, change `status` to `confirmed`.
-5. Update `ASSUMPTIONS.md` if the answer overturns a judgment call recorded
-   there.
+5. Update the local `ASSUMPTIONS.md` if the answer overturns a judgment call
+   recorded there.
 
 The build fails if any placeholder string (`TODO`, `FIXME`, an unfilled `{{slot}}`
 and similar), an em dash, or an emoji reaches rendered copy. That check is the

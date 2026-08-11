@@ -17,3 +17,7 @@ node_modules/
 .DS_Store
 .env
 .env.production
+
+# Working documents between the owner and the build session; not published.
+/QUESTIONS.md
+/ASSUMPTIONS.md
