@@ -1,0 +1,30 @@
+---
+import { Image } from 'astro:assets';
+import { getFigure } from '../lib/figures';
+
+interface Props {
+  id: string;
+  /** Rendered width hint. Figures run to the full content measure by default. */
+  width?: number;
+  /** Set on the first figure of a route to opt out of lazy loading. */
+  eager?: boolean;
+}
+
+const { id, width = 1000, eager = false } = Astro.props;
+const fig = getFigure(id);
+---
+
+<figure>
+  <Image
+    src={fig.src}
+    alt={fig.alt}
+    width={width}
+    densities={[1, 2]}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding="async"
+  />
+  <figcaption>
+    {fig.caption}
+    <span class="figcaption__source">Source: {fig.source}</span>
+  </figcaption>
+</figure>

@@ -1,0 +1,44 @@
+---
+title: Embedded FIR filter with persistent coefficients
+priority: 5
+thesis: 'Filter coefficients that live in flash are fixed at compile time; putting them in external EEPROM behind a serial protocol makes the filter reconfigurable at runtime and across power cycles.'
+role: Solo
+org: UC Santa Cruz ECE 121
+dates: '2025'
+stack:
+  - PIC32
+  - Embedded C
+  - I2C
+  - SPI
+  - ADC and DAC
+  - FIR
+repo: https://github.com/nthankas/EmbeddedFilterWithEEPROM
+artifacts:
+  - label: Repository
+    href: https://github.com/nthankas/EmbeddedFilterWithEEPROM
+status: needs_confirmation
+openQuestions:
+  - Course number and quarter are inferred from the repository, not confirmed
+description: 'A mixed-signal chain on PIC32: four-channel ADC into a 32-tap FIR filter into an SPI DAC, with filter coefficients stored in external EEPROM and updatable at runtime over a checksummed UART protocol.'
+---
+
+A mixed-signal path on a PIC32: analog in, filtered, analog out, with the filter
+itself treated as data rather than as code.
+
+**The signal path.** A four-channel scanning converter fills a circular buffer
+from its interrupt handler. A 32-tap FIR convolution with signed integer weights
+runs over that buffer, and the result drives an external converter over SPI,
+synchronized to the conversion rate so the output cadence is set by the sampler
+rather than by the main loop.
+
+**Why the coefficients are external.** Compiled-in coefficients mean a rebuild
+and a reflash to change filter behavior. Here the coefficient banks live in an
+external EEPROM over I2C, with byte and page-level access and write-complete
+polling, so a bank survives power cycling and can be swapped without touching
+the firmware image. A checksummed packet protocol over the serial link updates
+them at runtime, with a packet queue so protocol handling does not stall the
+sampling path.
+
+Front-panel switches select the active input channel, switch between two filter
+banks, and choose between absolute-value and peak-to-peak display modes, so the
+effect of a coefficient change is visible immediately on the hardware.

@@ -1,0 +1,94 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import Figure from './Figure.astro';
+
+interface Props {
+  entry: CollectionEntry<'projects'>;
+  index: number;
+}
+
+const { entry, index } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const num = String(index + 1).padStart(2, '0');
+const headingId = `project-${entry.id}`;
+---
+
+<details class="entry" id={entry.id}>
+  <summary aria-describedby={headingId}>
+    <div class="entry__head">
+      <div>
+        <span class="entry__index">{num}</span>
+        <h3 class="entry__title" id={headingId}>{d.title}</h3>
+        <p class="entry__thesis">{d.thesis}</p>
+        {
+          /* Lead figure: visible while the card is collapsed, so the projects
+             section carries real imagery before anything is expanded. */
+          d.lead && (
+            <div class="entry__lead">
+              <Figure id={d.lead} width={720} />
+            </div>
+          )
+        }
+        <ul class="chips" aria-label={`Stack for ${d.title}`}>
+          {d.stack.map((s) => <li>{s}</li>)}
+        </ul>
+        <span class="entry__toggle"></span>
+      </div>
+      <dl class="meta">
+        <div>
+          <dt>Role</dt>
+          <dd>{d.role}</dd>
+        </div>
+        <div>
+          <dt>Context</dt>
+          <dd>{d.org}</dd>
+        </div>
+        <div>
+          <dt>Dates</dt>
+          <dd>{d.dates}</dd>
+        </div>
+        {
+          d.team && (
+            <div>
+              <dt>Team</dt>
+              <dd>{d.team}</dd>
+            </div>
+          )
+        }
+      </dl>
+    </div>
+  </summary>
+
+  <div class="entry__body">
+    <Content />
+
+    <h3>Artifacts</h3>
+    <ul class="contact-list">
+      {
+        d.caseStudy && (
+          <li>
+            <span class="label">Case study</span>
+            <a href={`${base}/work/${d.caseStudy}`}>Full write-up</a>
+          </li>
+        )
+      }
+      {
+        d.artifacts.map((a) => (
+          <li>
+            <span class="label">{a.label}</span>
+            {a.href ? (
+              <a href={a.href} rel="noopener">
+                {a.href.replace(/^https?:\/\//, '')}
+              </a>
+            ) : (
+              <span style="color:var(--ink-muted)">{a.note ?? 'not yet published'}</span>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</details>

@@ -1,0 +1,186 @@
+---
+import { getEntry } from 'astro:content';
+import CaseStudy from '../../layouts/CaseStudy.astro';
+import DataTable from '../../components/DataTable.astro';
+
+const entry = await getEntry('projects', 'leaf-me-alone');
+if (!entry) throw new Error('Missing project entry: leaf-me-alone');
+---
+
+<CaseStudy
+  entry={entry}
+  standfirst="Water takes time to percolate to the sensor, so an irrigation controller that reads immediately after watering reads a stale value and overwaters. This system was designed around that delay instead of around a threshold."
+>
+  <h2>Context and constraints</h2>
+
+  <p>
+    A closed-loop autonomous irrigation system built for a sensing and signal
+    processing course, running on a single microcontroller with the sensors
+    available in the course kit as the starting point. The target was a system
+    that keeps a potted plant inside a moisture band without supervision and
+    without overwatering it.
+  </p>
+
+  <p>
+    The physical constraint that defines the problem is percolation delay. Water
+    delivered at the surface takes time to reach the depth the probe sits at. A
+    controller that thresholds a raw reading and runs the pump until the reading
+    crosses will therefore keep pumping against a measurement that has not yet
+    responded, and the plant is flooded by the time the sensor agrees. Any design
+    that ignores the delay fails the same way regardless of how good the sensor
+    is.
+  </p>
+
+  <h2>Role</h2>
+
+  <p>
+    A three-person team. I worked on the sensor characterization studies, the
+    signal chain and calibration, and the control state machine. The division of
+    the remaining work across my teammates is not recorded here pending
+    confirmation, so nothing on this page should be read as a claim over their
+    contributions.
+  </p>
+
+  <h2>Requirements decomposition</h2>
+
+  <DataTable
+    caption="Requirements and how each was verified"
+    columns={[{ head: 'Requirement' }, { head: 'Target' }, { head: 'Verification' }]}
+    rows={[
+      ['Resolve soil moisture change', 'below 1 percent VWC sample-to-sample', 'repeat sampling in a stable environment'],
+      ['Reservoir level accuracy', 'within +/-5 mm', '5 known heights, 3 readings each'],
+      ['Reach target moisture', 'within +/-5 percent VWC', '10 integrated watering trials'],
+      ['Never overwater', 'hard pulse cap enforced', 'sensor isolated from delivered water'],
+      ['Never dry-run the pump', 'inhibit below reservoir floor', 'drain and refill cycle'],
+      ['Control latency', 'bounded and known', 'fixed 500 ms update interval'],
+    ]}
+  />
+
+  <h2>Design decisions</h2>
+
+  <h3>Sensor selection, decided by characterization rather than by datasheet</h3>
+
+  <p>
+    Two moisture-sensing approaches were available in the kit and both were
+    evaluated experimentally before either was accepted or rejected.
+  </p>
+
+  <p>
+    A capacitive touch sensor was proposed to infer moisture from oscillation
+    period. It lost on two measurable grounds. The first is a timescale mismatch:
+    soil moisture moves over hours to days through evaporation and uptake, and
+    the sensor could not resolve gradual change between control updates, even
+    though on the bench it cleanly separated fully saturated soil from fully dry
+    soil. Separating the extremes is not the measurement the controller needs.
+    The second is dynamic range: period variation between practical wet and dry
+    conditions fell inside the sensor's own noise floor, so repeated trials at
+    the same true moisture returned inconsistent readings.
+  </p>
+
+  <p>
+    A piezoelectric element was proposed to read soil compaction as a dryness
+    proxy. Testing showed why the premise does not hold: the element is a charge
+    generator that responds to dynamic force, not to static load. Inserted and
+    left stationary it produced a brief transient as it was pushed in and then
+    settled to zero, regardless of moisture or compaction.
+  </p>
+
+  <p>
+    Both were replaced with a dedicated capacitive soil moisture probe. That was
+    chosen over the cheaper resistive style on a specific physical criterion:
+    resistive probes pass DC through the soil and corrode by electrolysis, which
+    makes them a consumable in exactly the deployment this system targets.
+  </p>
+
+  <h3>Pulse and soak rather than threshold and pump</h3>
+
+  <p>
+    The control strategy follows directly from the percolation constraint.
+    Instead of running the pump until the reading crosses a target, the
+    controller delivers a fixed short pulse, then waits for the water to reach
+    the probe before it looks again. The measurement is only trusted after the
+    system has given the physics time to happen. A hard cap on consecutive pulses
+    bounds the worst case if the probe is ever isolated from the delivered water.
+  </p>
+
+  <h2>Implementation</h2>
+
+  <h3>Signal chain and calibration</h3>
+
+  <p>
+    The probe's analog output is read on a 12-bit converter and passed through a
+    Kalman filter with process and measurement noise tuned empirically, holding
+    sample-to-sample variation under 1 percent volumetric water content in a
+    stable environment.
+  </p>
+
+  <p>
+    Calibration endpoints were measured directly rather than assumed: 1210 counts
+    with the probe submerged and 2523 counts in open air, a 1313-count dynamic
+    range. Those endpoints map onto an approximate 10 to 50 percent volumetric
+    water content scale for potting soil rather than a naive 0 to 100 percent
+    scale, because 100 percent volumetric water content is physically impossible
+    in soil, and a controller calibrated against an impossible endpoint is
+    calibrated against nothing. The 10 to 50 percent range comes from published
+    soil-science reference values for the medium.
+  </p>
+
+  <h3>Reservoir sensing</h3>
+
+  <p>
+    An ultrasonic rangefinder mounted above the reservoir is driven by a
+    timer-based state machine with interrupt edge capture on the echo line. Time
+    of flight converts to distance through a least-squares fit against measured
+    known heights rather than through the nominal speed of sound, is smoothed
+    with a four-sample moving average, and maps to a 0 to 100 percent level
+    through a two-point field calibration.
+  </p>
+
+  <h3>Control</h3>
+
+  <p>
+    A four-state machine updates every 500 ms: calibrate, idle, water and soak.
+    Idle reads moisture and reservoir level and enters watering only when the
+    soil is below the trigger threshold and the reservoir is above its own floor,
+    so a low reservoir inhibits the pump rather than dry-running it. Watering
+    runs a single 500 ms pump pulse. Soaking waits 10 seconds for percolation,
+    re-reads, and either returns to idle on reaching target or issues another
+    pulse, with a hard cap of 10 pulses per cycle.
+  </p>
+
+  <h2>Results</h2>
+
+  <DataTable
+    caption="Validation results"
+    columns={[{ head: 'Test' }, { head: 'Result' }]}
+    rows={[
+      ['Reservoir level accuracy, 5 known heights, 3 readings each', 'all within +/-3 mm against a +/-5 mm goal'],
+      ['Integrated watering, 10 trials', '10 of 10 reached target within +/-5 percent VWC'],
+      ['Pulse efficiency', '9 of 10 trials converged on a single 500 ms pulse'],
+      ['Overwatering cap', 'verified by isolating the sensor from delivered water; system halted at the cap'],
+      ['Low-reservoir inhibit', 'pump refused to run below threshold, resumed after refill'],
+      ['Sample-to-sample variation, stable environment', 'under 1 percent VWC'],
+      ['Control latency', 'approximately 500 ms, bounded by the update interval'],
+    ]}
+    highlight={[[1, 1], [2, 1]]}
+  />
+
+  <p>
+    That 9 of 10 trials converged on a single pulse is the result that says the
+    pulse size and soak interval were matched to the soil, rather than the system
+    simply iterating its way to target.
+  </p>
+
+  <h2>Scope of the measurement</h2>
+
+  <p>
+    Volumetric water content here is approximate. True calibration requires
+    gravimetric oven-dry analysis, which was not performed, so the percentages
+    are a repeatable index rather than an absolute soil physics measurement. The
+    endpoints are specific to general potting soil and would move for a different
+    medium. Moisture is sampled at a single point rather than across the root
+    zone, so the controller regulates the soil around the probe and assumes the
+    pot is representative. Stating those bounds is part of the result: a moisture
+    number without them is not a measurement.
+  </p>
+</CaseStudy>

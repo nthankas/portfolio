@@ -1,0 +1,113 @@
+---
+title: WALL-E block-sorting robot
+priority: 3
+thesis: 'The interesting work was architectural: identical sub-machines handle every acquisition zone, so adding or reordering a zone is a change to the sequence rather than to the behavior.'
+role: Sole software developer
+org: UC Santa Cruz ECE 118/218 mechatronics
+dates: Spring 2025
+team: Team of three
+stack:
+  - PIC32
+  - Embedded C
+  - Hierarchical state machine
+  - Input capture
+  - IR and color sensing
+repo: https://github.com/nthankas/WallE_Robot
+caseStudy: walle
+lead: walle-cad
+artifacts:
+  - label: Repository
+    href: https://github.com/nthankas/WallE_Robot
+  - label: Project site
+    href: https://sites.google.com/ucsc.edu/mechatronicsgroup15/home
+status: confirmed
+openQuestions: []
+description: 'An autonomous block-sorting robot on PIC32 running a hierarchical state machine over an event-driven services framework. Bench characterization of the rangefinder drove a navigation redesign.'
+---
+
+import Figure from '../../components/Figure.astro';
+import FigurePair from '../../components/FigurePair.astro';
+import DataTable from '../../components/DataTable.astro';
+
+An autonomous mobile robot that navigates a field, classifies colored blocks
+and sorts them into zones. I was the sole software developer on a three-person
+team; my teammates owned the mechanical design and fabrication.
+
+### Architecture
+
+A top-level state machine sequences four phases: three zone-acquisition phases
+and a sort phase, terminating after the final zone. Each zone phase delegates to
+a sub-machine implementing one consistent acquisition strategy: advance under
+line-sensor supervision, halt at the calibrated sensing distance, classify the
+block, then either initiate a grab and report the color upward, or skip and
+continue. The sort phase dispatches on the reported color into one of two
+symmetric flows that turn toward the correct drop zone, release, and realign to
+the line.
+
+Because the three zone sub-machines are the same machine with different
+parameters, reordering the field or adding a zone is an edit to the top-level
+sequence. The behavior inside a zone is written once.
+
+Sensing is fully event-driven. Line detection and color classification each run
+as services that post discrete events into a shared queue, so the state machines
+never poll and never block on a sensor.
+
+One deliberate simplicity decision is worth naming. Decoy blocks are handled
+statelessly: a decoy detection transitions the machine onward with no flag and
+no memory of having seen it. That removes an entire class of latch-up state at
+no cost to behavior, because nothing downstream ever needs to know a decoy was
+encountered.
+
+<FigurePair ids={['walle-hsm-whiteboard', 'walle-hsm-final']} />
+
+The two diagrams above are the clearest artifact on this project. The first is
+the architecture as planned, built around an ultrasonic sweep to find blocks.
+The second is the architecture that shipped, driven by line events. The change
+between them came out of the bench work below.
+
+### Sensing
+
+**Rangefinder characterization drove a navigation redesign.** The original
+concept swept an ultrasonic rangefinder to localize randomly scattered blocks.
+Bench characterization showed the physical limit clearly: the sensor returns
+accurate range only when the target lies near its acoustic axis, and during a
+pivoting sweep the wavefront strikes objects at oblique angles and scatters,
+collapsing detection outside a narrow frontal cone. Rather than filter around a
+measurement the sensor could not deliver, I rebuilt navigation around reflective
+infrared line following along taped paths. The rangefinder stayed in the system
+for what it does well, frontal proximity to a block during the approach, where
+the target is on-axis by construction, and came out of the localization role
+entirely.
+
+**Color classification.** The color sensor was strongly sensitive to both
+standoff distance and ambient lighting. The fix was split across domains:
+chassis geometry was changed so a block is always presented at a fixed short
+standoff inside the calibrated range, and thresholds were then tuned on
+empirical data collected under consistent lighting. Classification requires a
+minimum separation between channels before it will commit, and a reading must
+repeat across consecutive samples before the event is posted. Constraining the
+mechanical problem is what made the software problem tractable.
+
+**Drivetrain asymmetry.** The two drive motors were measurably unmatched,
+producing heading drift on straight runs and turn error. I characterized the
+drift through controlled runs and compensated it with per-direction drive-level
+offsets in the motion routines, which held alignment well enough for reliable
+line acquisition. The stated upgrade path is encoder feedback in place of
+hand-characterized compensation.
+
+**Event pacing.** Direction changes introduce mechanical settling transients
+that corrupt both line and color readings if the next event is processed
+immediately. I introduced settling intervals between transitions and sensitive
+reads, then tuned them: too short and the machine decides prematurely, too long
+and it becomes sluggish.
+
+<Figure id="walle-field" />
+
+### Mechanical context
+
+A 200 by 200 mm laser-cut tab-and-slot plywood chassis with 3D printing reserved
+for functional parts only, held to 14.244 in3 against a 30 in3 budget. My
+teammates owned this work; the one software-relevant consequence is the gripper
+standoff geometry that made color classification repeatable.
+
+<Figure id="walle-drawing" />

@@ -1,0 +1,49 @@
+---
+title: BattleBoats
+priority: 4
+thesis: 'Two microcontrollers playing a turn-based game over one wire cannot trust each other to flip a coin fairly, so turn order is settled by a commitment scheme rather than by asking politely.'
+role: Solo
+org: UC Santa Cruz ECE 121
+dates: '2025'
+stack:
+  - PIC32
+  - Embedded C
+  - UART
+  - Finite state machine
+  - OLED
+repo: https://github.com/nthankas/Battleships
+artifacts:
+  - label: Repository
+    href: https://github.com/nthankas/Battleships
+status: needs_confirmation
+openQuestions:
+  - Course number and quarter are inferred from the repository, not confirmed
+description: 'A two-player Battleship game across two PIC32 boards over UART, with a checksummed message protocol and a commitment scheme that makes the opening coin flip verifiable.'
+---
+
+Two Uno32 boards play a turn-based game against each other over a crossed UART
+link. The game itself is the easy part; the parts worth writing up are the link
+and the trust problem.
+
+**The protocol.** Messages are framed in an NMEA-like format with an XOR
+checksum over the payload, decoded a character at a time by a state machine
+rather than buffered and parsed whole. That matters on a microcontroller
+receiving one character per interrupt: the decoder holds a few bytes of state
+instead of a whole message buffer, and a corrupted frame is rejected at the
+checksum rather than producing a half-valid move. Five message types cover
+challenge, accept, reveal, shot and result.
+
+**The trust problem.** Whoever moves first has an advantage, and neither board
+can watch the other generate a random number. Turn order is settled with a
+commitment scheme: each side commits to a hash of its secret, both commitments
+are exchanged, then both secrets are revealed and combined into the coin flip.
+Because each side committed before seeing the other's secret, neither can choose
+a secret that steers the outcome, and a revealed secret that does not match its
+commitment is detected as cheating rather than silently accepted.
+
+**The rest.** A top-level state machine drives negotiation, move submission and
+win detection across seven states. Board state tracks both fields on a 6 by 10
+grid with per-boat life tracking, random placement with collision avoidance, and
+guess generation for the opposing side. Both fields render side by side on a 128
+by 64 display, showing own boats and hits against unknown squares on the
+opponent's field.

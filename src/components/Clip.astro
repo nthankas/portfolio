@@ -1,0 +1,70 @@
+---
+import { videos, type VideoId } from '../data/videos';
+
+/**
+ * Demo video slot. Three states, in order of preference:
+ *
+ *  1. A local file in public/video/ renders a native player with a poster,
+ *     preload="none", muted, no autoplay.
+ *  2. A Drive file id renders Drive's preview player in a lazy-loaded iframe,
+ *     so the clip streams from the owner's Drive without being re-hosted and
+ *     costs nothing at page load. Requires the file to be link-shared.
+ *  3. Neither: the slot renders its caption as a typed description of what was
+ *     demonstrated. Never a "coming soon" placeholder.
+ */
+
+interface Props {
+  id: VideoId;
+}
+
+const { id } = Astro.props;
+const clip = videos[id];
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<div class="clip">
+  {
+    clip.file ? (
+      <figure>
+        <video
+          controls
+          muted
+          playsinline
+          preload="none"
+          poster={clip.poster ? `${base}/video/${clip.poster}` : undefined}
+          width="1000"
+          height="562"
+        >
+          <source src={`${base}/video/${clip.file}`} type="video/mp4" />
+          Your browser cannot play this clip.
+        </video>
+        <figcaption>
+          {clip.caption}
+          <span class="figcaption__source">Source: {clip.source}</span>
+        </figcaption>
+      </figure>
+    ) : clip.drive ? (
+      <figure>
+        <iframe
+          src={`https://drive.google.com/file/d/${clip.drive}/preview`}
+          loading="lazy"
+          allow="fullscreen"
+          allowfullscreen
+          title={clip.caption}
+          width="1000"
+          height="562"
+        />
+        <figcaption>
+          {clip.caption}
+          <span class="figcaption__source">Source: {clip.source}</span>
+        </figcaption>
+      </figure>
+    ) : (
+      <p class="clip__pending">
+        <span class="label">Clip pending publication</span>
+        <br />
+        {clip.caption}
+      </p>
+    )
+  }
+</div>

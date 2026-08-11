@@ -1,0 +1,34 @@
+---
+import { Image } from 'astro:assets';
+import { getFigure } from '../lib/figures';
+
+interface Props {
+  ids: [string, string];
+  /** Opt out of lazy loading when the pair sits above the fold. */
+  eager?: boolean;
+}
+
+const { ids, eager = false } = Astro.props;
+const pair = ids.map((id) => getFigure(id));
+---
+
+<div class="figure-pair">
+  {
+    pair.map((fig) => (
+      <figure>
+        <Image
+          src={fig.src}
+          alt={fig.alt}
+          width={620}
+          densities={[1, 2]}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+        <figcaption>
+          {fig.caption}
+          <span class="figcaption__source">Source: {fig.source}</span>
+        </figcaption>
+      </figure>
+    ))
+  }
+</div>
