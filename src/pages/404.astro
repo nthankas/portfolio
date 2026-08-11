@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import { owner } from '../site.config';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Base
+  title={`Not found · ${owner.name}`}
+  description="This page does not exist."
+  canonicalPath="/404"
+>
+  <div class="shell">
+    <section class="hero">
+      <p class="label">404</p>
+      <h1>No such page.</h1>
+      <p class="lede">
+        Whatever linked here is stale. Everything on this site is reachable from
+        the home page.
+      </p>
+      <ul class="contact-list" style="margin-top:1.5rem">
+        <li>
+          <span class="label">Home</span>
+          <a href={`${base}/`}>{owner.name}</a>
+        </li>
+        <li>
+          <span class="label">Projects</span>
+          <a href={`${base}/#projects`}>All projects</a>
+        </li>
+        <li>
+          <span class="label">Contact</span>
+          <a href={`mailto:${owner.email}`}>{owner.email}</a>
+        </li>
+      </ul>
+    </section>
+  </div>
+</Base>

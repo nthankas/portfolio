@@ -74,9 +74,34 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
     <meta name="twitter:card" content={ogUrl ? 'summary_large_image' : 'summary'} />
 
     <meta name="author" content={owner.name} />
-    <meta name="theme-color" content="#fbfaf6" />
+    <meta name="theme-color" content="#f7f8f9" />
     <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
     <link rel="sitemap" href={withBase('/sitemap-index.xml')} />
+
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: owner.name,
+        email: `mailto:${owner.email}`,
+        url: canonical.origin + base,
+        jobTitle: 'Robotics software engineer',
+        sameAs: [owner.githubUrl, owner.linkedinUrl],
+        alumniOf: {
+          '@type': 'CollegeOrUniversity',
+          name: 'University of California, Santa Cruz',
+        },
+        knowsAbout: [
+          'Robotics software architecture',
+          'Robot simulation',
+          'Perception and state estimation',
+          'ROS 2',
+          'NVIDIA Isaac Sim',
+          'Embedded systems',
+        ],
+      })}
+    />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>

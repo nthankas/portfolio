@@ -146,11 +146,12 @@ The deploy target is one edit, in `src/site.config.ts`:
 Canonical URLs, Open Graph URLs, the sitemap, every asset path and the CNAME
 file all derive from those values.
 
-`.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every
-push to `main`. Before the first run, set repository Settings > Pages > Source to
-GitHub Actions. For Vercel instead, set the framework preset to Astro, leave the
-build command as `npm run build` and the output directory as `dist`, and set
-`base` to `/`.
+`.github/workflows/deploy.yml` builds the site and force-pushes `dist/` to the
+`gh-pages` branch on every push to `main`; GitHub Pages serves that branch. No
+Pages settings step is needed, because pushing a `gh-pages` branch enables
+Pages by itself. For Vercel instead, set the framework preset to Astro, leave
+the build command as `npm run build` and the output directory as `dist`, and
+set `base` to `/`.
 
 ## Constraints this site holds to
 
