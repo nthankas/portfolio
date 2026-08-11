@@ -1,6 +1,6 @@
 ---
 import Base from './Base.astro';
-import type { CollectionEntry } from 'astro:content';
+import { getCollection, type CollectionEntry } from 'astro:content';
 
 interface Props {
   entry: CollectionEntry<'projects'>;
@@ -11,6 +11,13 @@ interface Props {
 const { entry, standfirst } = Astro.props;
 const d = entry.data;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Neighbouring case studies in priority order, for the footer navigation.
+const studies = (await getCollection('projects', (p) => p.data.caseStudy))
+  .sort((a, b) => a.data.priority - b.data.priority);
+const i = studies.findIndex((p) => p.id === entry.id);
+const prev = i > 0 ? studies[i - 1] : null;
+const next = i >= 0 && i < studies.length - 1 ? studies[i + 1] : null;
 ---
 
 <Base
@@ -73,6 +80,29 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           ))
         }
       </ul>
+
+      <nav class="case-nav" aria-label="Other case studies">
+        {
+          prev ? (
+            <a href={`${base}/work/${prev.data.caseStudy}`}>
+              <span class="label">Previous</span>
+              <span class="case-nav__title">{prev.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a href={`${base}/work/${next.data.caseStudy}`} class="case-nav__next">
+              <span class="label">Next</span>
+              <span class="case-nav__title">{next.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
     </div>
   </article>
 </Base>

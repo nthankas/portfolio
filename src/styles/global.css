@@ -867,6 +867,43 @@ h1 em,
   padding-bottom: 0.75rem;
 }
 
+/* ------------------------------------------------------------- case nav -- */
+
+.case-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  border-top: 1px solid var(--rule-strong);
+  margin-top: 3.5rem;
+  padding-top: 1.25rem;
+}
+
+.case-nav a {
+  text-decoration: none;
+  display: inline-block;
+  padding-block: 0.3rem;
+}
+
+.case-nav__next {
+  text-align: right;
+}
+
+.case-nav .label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.case-nav__title {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.case-nav a:hover .case-nav__title {
+  color: var(--accent);
+}
+
 /* --------------------------------------------------------------- footer -- */
 
 .site-footer {

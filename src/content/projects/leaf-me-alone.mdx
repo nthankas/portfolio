@@ -26,6 +26,7 @@ description: 'A closed-loop autonomous irrigation controller on an STM32F411RE, 
 ---
 
 import DataTable from '../../components/DataTable.astro';
+import LeafControlDiagram from '../../components/LeafControlDiagram.astro';
 
 Most hobby irrigation systems threshold a raw sensor value and switch a pump.
 That fails for a physical reason. Water takes time to percolate to the sensor,
@@ -86,6 +87,8 @@ only when the soil is below the trigger threshold and the reservoir is above its
 own floor. Watering runs a single 500 ms pump pulse. Soaking waits 10 seconds
 for percolation, re-reads, and either returns to idle on reaching target or
 issues another pulse, with a hard cap of 10 pulses.
+
+<LeafControlDiagram />
 
 <DataTable
   caption="Validation results"

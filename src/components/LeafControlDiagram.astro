@@ -1,0 +1,67 @@
+---
+/**
+ * The pulse-and-soak control loop, typeset as an inline SVG in the site's own
+ * type and palette. Every state, transition and number is from the validated
+ * design; this draws confirmed facts, it does not add any.
+ */
+---
+
+<figure>
+  <svg
+    viewBox="0 0 720 300"
+    role="img"
+    aria-label="State diagram of the irrigation controller. Four states: calibrate, idle, water and soak. Calibrate leads to idle. Idle transitions to water only when soil is below the trigger and the reservoir is above its floor. Water runs a single 500 millisecond pump pulse and always transitions to soak. Soak waits 10 seconds for percolation, then either returns to idle on reaching the target or issues another pulse by returning to water, with a hard cap of 10 pulses per cycle."
+    style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"
+  >
+    <defs>
+      <marker id="lcd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-muted)"></path>
+      </marker>
+    </defs>
+
+    <g font-family="var(--mono)" font-size="13" fill="var(--ink)">
+      <!-- states -->
+      <g>
+        <rect x="30" y="60" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+        <text x="95" y="88" text-anchor="middle" font-weight="600">CALIBRATE</text>
+
+        <rect x="240" y="60" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+        <text x="305" y="88" text-anchor="middle" font-weight="600">IDLE</text>
+
+        <rect x="450" y="60" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+        <text x="515" y="88" text-anchor="middle" font-weight="600">WATER</text>
+
+        <rect x="450" y="200" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+        <text x="515" y="228" text-anchor="middle" font-weight="600">SOAK</text>
+      </g>
+
+      <!-- transitions -->
+      <g stroke="var(--ink-muted)" fill="none" stroke-width="1.25" marker-end="url(#lcd-arrow)">
+        <line x1="160" y1="83" x2="236" y2="83"></line>
+        <line x1="370" y1="83" x2="446" y2="83"></line>
+        <line x1="515" y1="106" x2="515" y2="196"></line>
+        <path d="M 450 223 L 305 223 L 305 110"></path>
+        <path d="M 580 235 C 622 235 622 95 584 95"></path>
+      </g>
+
+      <!-- transition labels -->
+      <g font-size="11" fill="var(--ink-muted)">
+        <text x="376" y="38">soil below trigger AND</text>
+        <text x="376" y="52">reservoir above floor</text>
+        <text x="524" y="156">one 500 ms pulse</text>
+        <text x="300" y="180">at target after 10 s</text>
+        <text x="300" y="194">percolation wait</text>
+        <text x="515" y="278" text-anchor="middle">below target, under the 10 pulse cap: pulse again</text>
+      </g>
+
+      <!-- update rate note -->
+      <text x="30" y="282" font-size="11" fill="var(--ink-muted)">update interval 500 ms</text>
+    </g>
+  </svg>
+  <figcaption>
+    The pulse-and-soak loop. Watering is a single fixed pulse and the
+    measurement is only re-read after percolation has had time to happen, which
+    is the design decision the whole controller hangs on.
+    <span class="figcaption__source">Source: validated controller design, drawn from the report facts.</span>
+  </figcaption>
+</figure>

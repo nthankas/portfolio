@@ -2,6 +2,8 @@
 import { getEntry } from 'astro:content';
 import CaseStudy from '../../layouts/CaseStudy.astro';
 import DataTable from '../../components/DataTable.astro';
+import LeafControlDiagram from '../../components/LeafControlDiagram.astro';
+import LeafSignalDiagram from '../../components/LeafSignalDiagram.astro';
 
 const entry = await getEntry('projects', 'leaf-me-alone');
 if (!entry) throw new Error('Missing project entry: leaf-me-alone');
@@ -125,6 +127,8 @@ if (!entry) throw new Error('Missing project entry: leaf-me-alone');
     soil-science reference values for the medium.
   </p>
 
+  <LeafSignalDiagram />
+
   <h3>Reservoir sensing</h3>
 
   <p>
@@ -147,6 +151,8 @@ if (!entry) throw new Error('Missing project entry: leaf-me-alone');
     re-reads, and either returns to idle on reaching target or issues another
     pulse, with a hard cap of 10 pulses per cycle.
   </p>
+
+  <LeafControlDiagram />
 
   <h2>Results</h2>
 
