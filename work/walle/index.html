@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WALL-E block-sorting robot · Nikhil Thankasala</title><meta name="description" content="An autonomous block-sorting robot on PIC32 running a hierarchical state machine over an event-driven services framework. Bench characterization of the rangefinder drove a navigation redesign."><link rel="canonical" href="https://nthankas.github.io/portfolio/work/walle/"><meta property="og:type" content="website"><meta property="og:title" content="WALL-E block-sorting robot · Nikhil Thankasala"><meta property="og:description" content="An autonomous block-sorting robot on PIC32 running a hierarchical state machine over an event-driven services framework. Bench characterization of the rangefinder drove a navigation redesign."><meta property="og:url" content="https://nthankas.github.io/portfolio/work/walle/"><meta property="og:site_name" content="Nikhil Thankasala"><meta property="og:image" content="https://nthankas.github.io/portfolio/og/walle.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="author" content="Nikhil Thankasala"><meta name="theme-color" content="#f7f8f9"><link rel="icon" href="/portfolio/favicon.svg" type="image/svg+xml"><link rel="sitemap" href="/portfolio/sitemap-index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Nikhil Thankasala","email":"mailto:nikhilthankasala@gmail.com","url":"https://nthankas.github.io/portfolio","jobTitle":"Robotics software engineer","sameAs":["https://github.com/nthankas","https://www.linkedin.com/in/nikhil-thankasala"],"alumniOf":{"@type":"CollegeOrUniversity","name":"University of California, Santa Cruz"},"knowsAbout":["Robotics software architecture","Robot simulation","Perception and state estimation","ROS 2","NVIDIA Isaac Sim","Embedded systems"]}</script><link rel="stylesheet" href="/portfolio/_astro/fortis.B_dUkGNp.css"></head> <body> <a class="skip-link" href="#main">Skip to content</a> <header class="site-header"> <div class="shell site-header__inner"> <a class="wordmark" href="/portfolio/" aria-label="Nikhil Thankasala, home"> <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"> <!-- Chamfered chassis outline with the four X-drive wheels at the
+                 45 degree corners. His robot, as a mark. --> <path d="M13 4 H27 L36 13 V27 L27 36 H13 L4 27 V13 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"></path> <line x1="7.5" y1="4.7" x2="4.7" y2="7.5" stroke="currentColor" stroke-width="2.4"></line> <line x1="32.5" y1="4.7" x2="35.3" y2="7.5" stroke="currentColor" stroke-width="2.4"></line> <line x1="4.7" y1="32.5" x2="7.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line> <line x1="35.3" y1="32.5" x2="32.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line> <text x="20" y="25.5" text-anchor="middle" font-size="13.5" font-weight="700" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" fill="currentColor" stroke="none">NT</text> </svg> <span class="wordmark__name">nikhil thankasala</span> </a> <nav class="site-nav" aria-label="Sections"> <a href="/portfolio/#projects">projects</a><a href="/portfolio/#experience">experience</a><a href="/portfolio/#contact">contact</a> <a href="mailto:nikhilthankasala@gmail.com?subject=Resume%20request">resume</a> </nav> </div> </header> <main id="main">  <article class="shell"> <header class="case-head split"> <div> <a class="backlink" href="/portfolio/#projects">All projects</a> <h1>WALL-E block-sorting robot</h1> <p class="lede">An autonomous robot that acquires colored blocks from three field zones and sorts them by color. The work worth writing up is architectural: every zone runs the same sub-machine, and a sensor characterization study replaced the entire navigation approach.</p> </div> <dl class="meta"> <div> <dt>Role</dt> <dd>Sole software developer</dd> </div> <div> <dt>Context</dt> <dd>UC Santa Cruz ECE 118/218 mechatronics</dd> </div> <div> <dt>Dates</dt> <dd>Spring 2025</dd> </div> <div> <dt>Team</dt> <dd>Team of three</dd> </div> <div> <dt>Stack</dt> <dd>PIC32, Embedded C, Hierarchical state machine, Input capture, IR and color sensing</dd> </div> </dl> </header> <div class="case-body">  <h2>Context and constraints</h2> <p>
+A mechatronics course project on an 8-bit-era microcontroller with a fixed
+    parts kit, a fixed field, and a fixed volume budget for 3D printed material.
+    The robot has to leave a base line, acquire blocks from three separate field
+    zones, classify each block by color, and deliver it to the matching drop
+    zone, all autonomously and within a run time limit.
+</p> <p>
+The constraint that shapes the software is the platform. There is no
+    operating system, no threads, and not enough headroom to poll sensors in a
+    main loop while also running motion. Anything that blocks stops the whole
+    robot.
+</p> <figure> <img src="/portfolio/_astro/walle-field-setup.pJeAACli_Z1Es1b8.webp" srcset="/portfolio/_astro/walle-field-setup.pJeAACli_Z1Es1b8.webp 1x, /portfolio/_astro/walle-field-setup.pJeAACli_1xSzXR.webp 2x" alt="Overhead photograph of the field during a run. A white board is marked with black tape: a large semicircular arc, a straight boundary line across the bottom, and a cross at the center. A red block sits at the top edge, a green block at the left and a blue block at the right. The robot sits at the center of the cross with its gripper arms open, and an operator reaches in from the bottom of the frame." loading="eager" decoding="async" fetchpriority="auto" width="1000" height="822"> <figcaption> The field as run. The taped arc and cross are the entire navigation reference, which is what replaced the rangefinder sweep. <span class="figcaption__source">Source: ECE 118/218 project photograph.</span> </figcaption> </figure> <h2>Role</h2> <p>
+I was the sole software developer on a three-person team. I owned the state
+    machine architecture, all sensor integration and filtering, and the drive
+    routines. My teammates owned the mechanical design, the chassis fabrication
+    and the gripper. Where their work is mentioned below it is because it changed
+    a software problem.
+</p> <h2>Requirements decomposition</h2> <div class="table-wrap"> <table> <caption>Requirements and the mechanism that satisfies each</caption> <thead> <tr> <th scope="col"> Requirement </th><th scope="col"> Mechanism </th> </tr> </thead> <tbody> <tr> <th scope="row"> Traverse between zones without odometry </th><td>reflective infrared line following along taped paths</td> </tr><tr> <th scope="row"> Stop at a repeatable distance from a block </th><td>frontal ultrasonic proximity with hysteresis</td> </tr><tr> <th scope="row"> Classify block color reliably </th><td>fixed mechanical standoff plus threshold classification with confirmation</td> </tr><tr> <th scope="row"> Ignore decoy blocks </th><td>stateless skip, no flag retained</td> </tr><tr> <th scope="row"> Never block on a sensor </th><td>services post discrete events into a shared queue</td> </tr><tr> <th scope="row"> Reorder or add a field zone cheaply </th><td>identical acquisition sub-machine per zone</td> </tr> </tbody> </table> </div> <h2>Design decisions</h2> <h3>One acquisition sub-machine, parameterized per zone</h3> <p>
+The top-level state machine sequences four phases: three zone-acquisition
+    phases and a sort phase, terminating after the final zone. Each zone phase
+    delegates to a sub-machine implementing one consistent acquisition strategy:
+    advance under line-sensor supervision, halt at the calibrated sensing
+    distance, classify the block, then either initiate a grab and report the
+    color upward, or skip and continue.
+</p> <p>
+The alternative was a bespoke machine per zone, which is what the field
+    layout naturally suggests since the three zones are reached differently. That
+    lost on maintenance cost: three bespoke machines means a behavior fix has to
+    be applied three times and can be applied inconsistently twice. Because the
+    zone sub-machines are the same machine with different parameters, reordering
+    the field or adding a zone is an edit to the top-level sequence, and the
+    behavior inside a zone is written once.
+</p> <p>
+The sort phase dispatches on the reported color into two symmetric flows
+    that turn toward the correct drop zone, release, and realign to the line
+    before handing control back for the next stage.
+</p> <h3>Event-driven sensing, not polled</h3> <p>
+Line detection and color classification each run as services that post
+    discrete events into a shared queue, so the state machines never poll a
+    sensor and never block on one. On a platform with no scheduler this is what
+    makes concurrent sensing and motion possible at all, and it is what allows a
+    settling interval to be expressed as a timer event rather than a delay loop.
+</p> <h3>Decoys are handled statelessly</h3> <p>
+A decoy detection transitions the machine onward with no flag and no memory
+    of having seen it. The alternative, tracking which decoys had been
+    encountered, buys nothing: nothing downstream ever needs to know. Not
+    tracking it removes an entire class of latch-up state, where the machine
+    holds a flag it can never clear and refuses to re-enter a zone, at zero cost
+    to behavior.
+</p> <h2>Sensing work</h2> <h3>Rangefinder characterization replaced the navigation approach</h3> <p>
+The original concept swept an ultrasonic rangefinder across the field to
+    localize randomly scattered blocks, which is the obvious use of the only
+    ranging sensor in the kit. Bench characterization showed the physical limit
+    clearly: the sensor returns accurate range only when the target lies near its
+    acoustic axis. During a pivoting sweep the wavefront strikes objects at
+    oblique angles and scatters away from the receiver, so detection collapses
+    outside a narrow frontal cone and the returns that do arrive are not
+    trustworthy bearings.
+</p> <p>
+The choice at that point was to filter around the sensor or to stop asking it
+    for a measurement it cannot make. I rebuilt navigation around reflective
+    infrared line following along taped paths, which turns localization into a
+    sequence of discrete line events with no bearing estimate needed at all. The
+    rangefinder stayed in the system for what it does well, frontal proximity to
+    a block during the approach, where the target is on-axis by construction, and
+    came out of the localization role entirely. Its readings there are low-pass
+    filtered with hysteresis so a noisy sample cannot bounce the machine between
+    approach states.
+</p> <div class="figure-pair"> <figure> <img src="/portfolio/_astro/walle-hsm-whiteboard.C2QqDtb-_OPchv.webp" srcset="/portfolio/_astro/walle-hsm-whiteboard.C2QqDtb-_OPchv.webp 1x, /portfolio/_astro/walle-hsm-whiteboard.C2QqDtb-_Zx6mEG.webp 2x" alt="Photograph of a whiteboard covered in red marker showing an early state machine plan. A main hierarchical state machine is broken into a search sub-machine listing left sweep, right sweep and advance, a grab sub-machine listing approach, grab block, push green and return home, and a sort sub-machine split into red and blue sub-sub-machines. Sketches of the field with red and blue drop zones and several transition graphs fill the rest of the board." loading="lazy" decoding="async" fetchpriority="auto" width="620" height="464"> <figcaption> The first architecture. Acquisition is built around an ultrasonic sweep, and the sort branch is already split red against blue. <span class="figcaption__source">Source: Project working notes, ECE 118/218.</span> </figcaption> </figure><figure> <img src="/portfolio/_astro/walle-final-state-machine.Dzx639Z__UqQzR.webp" srcset="/portfolio/_astro/walle-final-state-machine.Dzx639Z__UqQzR.webp 1x, /portfolio/_astro/walle-final-state-machine.Dzx639Z__LLRUn.webp 2x" alt="Final state machine diagram with four labelled sub-machine columns. CenterSubHSM, LeftSubHSM and RightSubHSM each run the same acquisition sequence of align, approach, grab, check field and return, with transitions labelled by infrared line events rather than distance events. Each exits to SortState. The fourth column, SortSubHSM, branches on detected color into RedFlow and BlueFlow sub-machines that turn, drop, realign and increment the stage counter, ending after the fourth stage." loading="lazy" decoding="async" fetchpriority="auto" width="620" height="573"> <figcaption> The architecture that shipped. Acquisition is now driven by infrared line events, and the three zone columns run the same sequence, so reordering a zone changes the sequence rather than the behavior. <span class="figcaption__source">Source: ECE 118/218 final report.</span> </figcaption> </figure> </div> <p>
+Those two diagrams are the clearest artifact on this project. The first is
+    the architecture as planned, organized around a search sub-machine doing left
+    and right sweeps. The second is the architecture that shipped, where the
+    equivalent states are driven by line events instead. The result of the sensor
+    study is visible as a structural change, not as a parameter change.
+</p> <h3>Color classification, constrained mechanically</h3> <p>
+The color sensor was strongly sensitive to both standoff distance and
+    ambient lighting, and no threshold set survived both varying together. The
+    fix was split across domains rather than solved entirely in software: the
+    chassis geometry was changed so a block is always presented at a fixed short
+    standoff inside the calibrated range, which removed one of the two variables
+    outright. Thresholds were then tuned on empirical data collected under
+    consistent lighting.
+</p> <p>
+Two guards make the classification commit only when it should. A reading must
+    show a minimum separation between channels before it counts as a color at
+    all, which rejects ambiguous readings rather than forcing them into the
+    nearest class, and a classification must repeat across consecutive samples
+    before the event is posted. Constraining the mechanical problem is what made
+    the software problem tractable.
+</p> <figure> <img src="/portfolio/_astro/walle-cad-mockup.CLrJuLyh_Z2uE907.webp" srcset="/portfolio/_astro/walle-cad-mockup.CLrJuLyh_Z2uE907.webp 1x, /portfolio/_astro/walle-cad-mockup.CLrJuLyh_OpaQV.webp 2x" alt="CAD render of the robot, styled after the film character it is named for: a boxy yellow and grey laser-cut body with a binocular head on top, a single rear wheel visible, and two flat gripper arms extending forward on rails. A red cube sits between the open arms." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="934"> <figcaption> Chassis mockup with a block presented between the gripper arms. That fixed presentation distance is what made color classification repeatable. <span class="figcaption__source">Source: ECE 118/218 final report.</span> </figcaption> </figure> <h3>Drivetrain asymmetry</h3> <p>
+The two drive motors were measurably unmatched, producing heading drift on
+    straight runs and error on turns. I characterized the drift through
+    controlled runs and compensated it with per-direction drive-level offsets in
+    the motion routines, which held alignment well enough for reliable line
+    acquisition. The honest upgrade path is encoder feedback in place of
+    hand-characterized compensation: the offsets are calibrated to these two
+    motors at this battery voltage and do not transfer.
+</p> <h3>Event pacing</h3> <p>
+Direction changes introduce mechanical settling transients that corrupt both
+    line and color readings if the next event is processed immediately. I
+    introduced settling intervals between transitions and sensitive reads and
+    tuned them against the platform: too short and the machine decides on a
+    reading taken mid-transient, too long and the run time budget suffers.
+</p> <figure> <img src="/portfolio/_astro/walle-wiring-schematic.15lJ2FBW_Z1L2sHY.webp" srcset="/portfolio/_astro/walle-wiring-schematic.15lJ2FBW_Z1L2sHY.webp 1x, /portfolio/_astro/walle-wiring-schematic.15lJ2FBW_22JBqg.webp 2x" alt="Wiring schematic centered on the Uno32 board. A color sensor connects on four filter-select and output lines at top left, two RC servos take PWM below it, and an H-bridge driver at right takes four direction lines and two enable lines and drives two motors. An ultrasonic rangefinder takes a trigger line and returns an echo line, two infrared reflectance sensors return output lines, and a 5 V regulator with two decoupling capacitors feeds the logic from a 9.9 V battery." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="742"> <figcaption> Sensor and actuator wiring. Every sensor on the board returns a discrete line the software turns into an event. <span class="figcaption__source">Source: ECE 118/218 final report.</span> </figcaption> </figure> <h2>Mechanical context</h2> <p>
+A 200 by 200 mm laser-cut tab-and-slot plywood chassis, with 3D printing
+    reserved for functional parts only and held to 14.244 in3 against a 30 in3
+    budget. My teammates owned this work. The one consequence that reaches the
+    software is the gripper standoff geometry described above, which is what made
+    color classification repeatable.
+</p> <figure> <img src="/portfolio/_astro/walle-cad-drawing.CLti0ak9_Z919GR.webp" srcset="/portfolio/_astro/walle-cad-drawing.CLti0ak9_Z919GR.webp 1x, /portfolio/_astro/walle-cad-drawing.CLti0ak9_2cTUfk.webp 2x" alt="Four-view assembly drawing of the robot: front view with the binocular head and both gripper arms, isometric view approaching a block, top view showing the internal bay layout between the drive wheels, and side view showing the arm reach past the chassis front." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="1000"> <figcaption> Assembly drawing of the final build. The gripper arms and the block presentation distance visible in the side view are the geometry that fixed the color sensing standoff. <span class="figcaption__source">Source: ECE 118/218 final report.</span> </figcaption> </figure>  <h2>Artifacts</h2> <ul class="contact-list"> <li> <span class="label">Repository</span> <a href="https://github.com/nthankas/WallE_Robot" rel="noopener"> github.com/nthankas/WallE_Robot </a> </li><li> <span class="label">Project site</span> <a href="https://sites.google.com/ucsc.edu/mechatronicsgroup15/home" rel="noopener"> sites.google.com/ucsc.edu/mechatronicsgroup15/home </a> </li> </ul> <nav class="case-nav" aria-label="Other case studies"> <a href="/portfolio/work/leaf-me-alone"> <span class="label">Previous</span> <span class="case-nav__title">Leaf Me Alone</span> </a> <span></span> </nav> </div> </article>  </main> <footer class="site-footer"> <div class="shell" style="display:flex;flex-wrap:wrap;gap:0.4rem 1.5rem;justify-content:space-between;width:100%;"> <span>Nikhil Thankasala &middot; Robotics software engineer</span> <span>San Francisco Bay Area, CA</span> </div> </footer> </body></html>

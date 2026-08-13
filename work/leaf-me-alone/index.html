@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Leaf Me Alone · Nikhil Thankasala</title><meta name="description" content="A closed-loop autonomous irrigation controller on an STM32F411RE, built around soil percolation delay. Two candidate sensors were characterized and ruled out on measured grounds before a replacement was chosen."><link rel="canonical" href="https://nthankas.github.io/portfolio/work/leaf-me-alone/"><meta property="og:type" content="website"><meta property="og:title" content="Leaf Me Alone · Nikhil Thankasala"><meta property="og:description" content="A closed-loop autonomous irrigation controller on an STM32F411RE, built around soil percolation delay. Two candidate sensors were characterized and ruled out on measured grounds before a replacement was chosen."><meta property="og:url" content="https://nthankas.github.io/portfolio/work/leaf-me-alone/"><meta property="og:site_name" content="Nikhil Thankasala"><meta property="og:image" content="https://nthankas.github.io/portfolio/og/leaf-me-alone.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="author" content="Nikhil Thankasala"><meta name="theme-color" content="#f7f8f9"><link rel="icon" href="/portfolio/favicon.svg" type="image/svg+xml"><link rel="sitemap" href="/portfolio/sitemap-index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Nikhil Thankasala","email":"mailto:nikhilthankasala@gmail.com","url":"https://nthankas.github.io/portfolio","jobTitle":"Robotics software engineer","sameAs":["https://github.com/nthankas","https://www.linkedin.com/in/nikhil-thankasala"],"alumniOf":{"@type":"CollegeOrUniversity","name":"University of California, Santa Cruz"},"knowsAbout":["Robotics software architecture","Robot simulation","Perception and state estimation","ROS 2","NVIDIA Isaac Sim","Embedded systems"]}</script><link rel="stylesheet" href="/portfolio/_astro/fortis.B_dUkGNp.css"></head> <body> <a class="skip-link" href="#main">Skip to content</a> <header class="site-header"> <div class="shell site-header__inner"> <a class="wordmark" href="/portfolio/" aria-label="Nikhil Thankasala, home"> <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"> <!-- Chamfered chassis outline with the four X-drive wheels at the
+                 45 degree corners. His robot, as a mark. --> <path d="M13 4 H27 L36 13 V27 L27 36 H13 L4 27 V13 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"></path> <line x1="7.5" y1="4.7" x2="4.7" y2="7.5" stroke="currentColor" stroke-width="2.4"></line> <line x1="32.5" y1="4.7" x2="35.3" y2="7.5" stroke="currentColor" stroke-width="2.4"></line> <line x1="4.7" y1="32.5" x2="7.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line> <line x1="35.3" y1="32.5" x2="32.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line> <text x="20" y="25.5" text-anchor="middle" font-size="13.5" font-weight="700" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" fill="currentColor" stroke="none">NT</text> </svg> <span class="wordmark__name">nikhil thankasala</span> </a> <nav class="site-nav" aria-label="Sections"> <a href="/portfolio/#projects">projects</a><a href="/portfolio/#experience">experience</a><a href="/portfolio/#contact">contact</a> <a href="mailto:nikhilthankasala@gmail.com?subject=Resume%20request">resume</a> </nav> </div> </header> <main id="main">  <article class="shell"> <header class="case-head split"> <div> <a class="backlink" href="/portfolio/#projects">All projects</a> <h1>Leaf Me Alone</h1> <p class="lede">Water takes time to percolate to the sensor, so an irrigation controller that reads immediately after watering reads a stale value and overwaters. This system was designed around that delay instead of around a threshold.</p> </div> <dl class="meta"> <div> <dt>Role</dt> <dd>Sensor characterization, signal chain and control</dd> </div> <div> <dt>Context</dt> <dd>UC Santa Cruz ECE 167, sensing and signal processing</dd> </div> <div> <dt>Dates</dt> <dd>Winter 2026</dd> </div> <div> <dt>Team</dt> <dd>Team of three</dd> </div> <div> <dt>Stack</dt> <dd>STM32F411RE, Embedded C, Kalman filter, ADC, Timer capture</dd> </div> </dl> </header> <div class="case-body">  <h2>Context and constraints</h2> <p>
+A closed-loop autonomous irrigation system built for a sensing and signal
+    processing course, running on a single microcontroller with the sensors
+    available in the course kit as the starting point. The target was a system
+    that keeps a potted plant inside a moisture band without supervision and
+    without overwatering it.
+</p> <p>
+The physical constraint that defines the problem is percolation delay. Water
+    delivered at the surface takes time to reach the depth the probe sits at. A
+    controller that thresholds a raw reading and runs the pump until the reading
+    crosses will therefore keep pumping against a measurement that has not yet
+    responded, and the plant is flooded by the time the sensor agrees. Any design
+    that ignores the delay fails the same way regardless of how good the sensor
+    is.
+</p> <h2>Role</h2> <p>
+A three-person team. I worked on the sensor characterization studies, the
+    signal chain and calibration, and the control state machine.
+</p> <h2>Requirements decomposition</h2> <div class="table-wrap"> <table> <caption>Requirements and how each was verified</caption> <thead> <tr> <th scope="col"> Requirement </th><th scope="col"> Target </th><th scope="col"> Verification </th> </tr> </thead> <tbody> <tr> <th scope="row"> Resolve soil moisture change </th><td>below 1 percent VWC sample-to-sample</td><td>repeat sampling in a stable environment</td> </tr><tr> <th scope="row"> Reservoir level accuracy </th><td>within +/-5 mm</td><td>5 known heights, 3 readings each</td> </tr><tr> <th scope="row"> Reach target moisture </th><td>within +/-5 percent VWC</td><td>10 integrated watering trials</td> </tr><tr> <th scope="row"> Never overwater </th><td>hard pulse cap enforced</td><td>sensor isolated from delivered water</td> </tr><tr> <th scope="row"> Never dry-run the pump </th><td>inhibit below reservoir floor</td><td>drain and refill cycle</td> </tr><tr> <th scope="row"> Control latency </th><td>bounded and known</td><td>fixed 500 ms update interval</td> </tr> </tbody> </table> </div> <h2>Design decisions</h2> <h3>Sensor selection, decided by characterization rather than by datasheet</h3> <p>
+Two moisture-sensing approaches were available in the kit and both were
+    evaluated experimentally before either was accepted or rejected.
+</p> <p>
+A capacitive touch sensor was proposed to infer moisture from oscillation
+    period. It lost on two measurable grounds. The first is a timescale mismatch:
+    soil moisture moves over hours to days through evaporation and uptake, and
+    the sensor could not resolve gradual change between control updates, even
+    though on the bench it cleanly separated fully saturated soil from fully dry
+    soil. Separating the extremes is not the measurement the controller needs.
+    The second is dynamic range: period variation between practical wet and dry
+    conditions fell inside the sensor's own noise floor, so repeated trials at
+    the same true moisture returned inconsistent readings.
+</p> <p>
+A piezoelectric element was proposed to read soil compaction as a dryness
+    proxy. Testing showed why the premise does not hold: the element is a charge
+    generator that responds to dynamic force, not to static load. Inserted and
+    left stationary it produced a brief transient as it was pushed in and then
+    settled to zero, regardless of moisture or compaction.
+</p> <p>
+Both were replaced with a dedicated capacitive soil moisture probe. That was
+    chosen over the cheaper resistive style on a specific physical criterion:
+    resistive probes pass DC through the soil and corrode by electrolysis, which
+    makes them a consumable in exactly the deployment this system targets.
+</p> <h3>Pulse and soak rather than threshold and pump</h3> <p>
+The control strategy follows directly from the percolation constraint.
+    Instead of running the pump until the reading crosses a target, the
+    controller delivers a fixed short pulse, then waits for the water to reach
+    the probe before it looks again. The measurement is only trusted after the
+    system has given the physics time to happen. A hard cap on consecutive pulses
+    bounds the worst case if the probe is ever isolated from the delivered water.
+</p> <h2>Implementation</h2> <h3>Signal chain and calibration</h3> <p>
+The probe's analog output is read on a 12-bit converter and passed through a
+    Kalman filter with process and measurement noise tuned empirically, holding
+    sample-to-sample variation under 1 percent volumetric water content in a
+    stable environment.
+</p> <p>
+Calibration endpoints were measured directly rather than assumed: 1210 counts
+    with the probe submerged and 2523 counts in open air, a 1313-count dynamic
+    range. Those endpoints map onto an approximate 10 to 50 percent volumetric
+    water content scale for potting soil rather than a naive 0 to 100 percent
+    scale, because 100 percent volumetric water content is physically impossible
+    in soil, and a controller calibrated against an impossible endpoint is
+    calibrated against nothing. The 10 to 50 percent range comes from published
+    soil-science reference values for the medium.
+</p> <figure> <svg viewBox="0 0 720 260" role="img" aria-label="Signal chain diagram with two lanes feeding the controller. Moisture lane: a capacitive soil probe into a 12 bit analog to digital converter, into a Kalman filter with empirically tuned noise, into a mapping from 1210 counts submerged and 2523 counts in air onto an approximate 10 to 50 percent volumetric water content scale. Reservoir lane: an ultrasonic rangefinder driven by timer interrupts with edge capture, into a least squares time of flight fit, into a four sample moving average, into a two point level calibration giving 0 to 100 percent. Both lanes feed the four state controller." style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"> <defs> <marker id="lsd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"> <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-muted)"></path> </marker> </defs> <g font-family="var(--mono)" font-size="12" fill="var(--ink)"> <!-- moisture lane --> <g> <rect x="20" y="40" width="120" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="80" y="58" text-anchor="middle">capacitive</text> <text x="80" y="74" text-anchor="middle">probe</text> <rect x="180" y="40" width="100" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="230" y="66" text-anchor="middle">12-bit ADC</text> <rect x="320" y="40" width="110" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="375" y="58" text-anchor="middle">Kalman</text> <text x="375" y="74" text-anchor="middle">filter</text> <rect x="470" y="40" width="140" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="540" y="58" text-anchor="middle">1210..2523 counts</text> <text x="540" y="74" text-anchor="middle">to 10..50% VWC</text> </g> <!-- reservoir lane --> <g> <rect x="20" y="140" width="120" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="80" y="158" text-anchor="middle">ultrasonic</text> <text x="80" y="174" text-anchor="middle">rangefinder</text> <rect x="180" y="140" width="100" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="230" y="158" text-anchor="middle">timer +</text> <text x="230" y="174" text-anchor="middle">edge capture</text> <rect x="320" y="140" width="110" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="375" y="158" text-anchor="middle">least-squares</text> <text x="375" y="174" text-anchor="middle">ToF fit</text> <rect x="470" y="140" width="140" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="540" y="158" text-anchor="middle">4-sample average,</text> <text x="540" y="174" text-anchor="middle">0..100% level</text> </g> <!-- controller --> <rect x="640" y="90" width="60" height="94" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="670" y="130" text-anchor="middle" font-weight="600">FSM</text> <text x="670" y="146" text-anchor="middle" font-size="10" fill="var(--ink-muted)">500 ms</text> <!-- arrows --> <g stroke="var(--ink-muted)" fill="none" stroke-width="1.25" marker-end="url(#lsd-arrow)"> <line x1="140" y1="62" x2="176" y2="62"></line> <line x1="280" y1="62" x2="316" y2="62"></line> <line x1="430" y1="62" x2="466" y2="62"></line> <line x1="610" y1="62" x2="636" y2="104"></line> <line x1="140" y1="162" x2="176" y2="162"></line> <line x1="280" y1="162" x2="316" y2="162"></line> <line x1="430" y1="162" x2="466" y2="162"></line> <line x1="610" y1="162" x2="636" y2="168"></line> </g> <!-- lane labels --> <g font-size="10" fill="var(--ink-muted)" letter-spacing="1.5"> <text x="20" y="28">SOIL MOISTURE</text> <text x="20" y="128">RESERVOIR LEVEL</text> </g> </g> </svg> <figcaption>
+The two sensing chains. Moisture is filtered to under 1 percent variation
+    sample to sample and mapped onto a physically possible scale; reservoir
+    level is fitted against measured heights rather than the nominal speed of
+    sound.
+<span class="figcaption__source">Source: ECE 167 final report.</span> </figcaption> </figure> <h3>Reservoir sensing</h3> <p>
+An ultrasonic rangefinder mounted above the reservoir is driven by a
+    timer-based state machine with interrupt edge capture on the echo line. Time
+    of flight converts to distance through a least-squares fit against measured
+    known heights rather than through the nominal speed of sound, is smoothed
+    with a four-sample moving average, and maps to a 0 to 100 percent level
+    through a two-point field calibration.
+</p> <h3>Control</h3> <p>
+A four-state machine updates every 500 ms: calibrate, idle, water and soak.
+    Idle reads moisture and reservoir level and enters watering only when the
+    soil is below the trigger threshold and the reservoir is above its own floor,
+    so a low reservoir inhibits the pump rather than dry-running it. Watering
+    runs a single 500 ms pump pulse. Soaking waits 10 seconds for percolation,
+    re-reads, and either returns to idle on reaching target or issues another
+    pulse, with a hard cap of 10 pulses per cycle.
+</p> <figure> <svg viewBox="0 0 720 300" role="img" aria-label="State diagram of the irrigation controller. Four states: calibrate, idle, water and soak. Calibrate leads to idle. Idle transitions to water only when soil is below the trigger and the reservoir is above its floor. Water runs a single 500 millisecond pump pulse and always transitions to soak. Soak waits 10 seconds for percolation, then either returns to idle on reaching the target or issues another pulse by returning to water, with a hard cap of 10 pulses per cycle." style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"> <defs> <marker id="lcd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"> <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-muted)"></path> </marker> </defs> <g font-family="var(--mono)" font-size="13" fill="var(--ink)"> <!-- states --> <g> <rect x="30" y="60" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="95" y="88" text-anchor="middle" font-weight="600">CALIBRATE</text> <rect x="240" y="60" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="305" y="88" text-anchor="middle" font-weight="600">IDLE</text> <rect x="450" y="60" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="515" y="88" text-anchor="middle" font-weight="600">WATER</text> <rect x="450" y="200" width="130" height="46" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="515" y="228" text-anchor="middle" font-weight="600">SOAK</text> </g> <!-- transitions --> <g stroke="var(--ink-muted)" fill="none" stroke-width="1.25" marker-end="url(#lcd-arrow)"> <line x1="160" y1="83" x2="236" y2="83"></line> <line x1="370" y1="83" x2="446" y2="83"></line> <line x1="515" y1="106" x2="515" y2="196"></line> <path d="M 450 223 L 305 223 L 305 110"></path> <path d="M 580 235 C 622 235 622 95 584 95"></path> </g> <!-- transition labels --> <g font-size="11" fill="var(--ink-muted)"> <text x="376" y="38">soil below trigger AND</text> <text x="376" y="52">reservoir above floor</text> <text x="524" y="156">one 500 ms pulse</text> <text x="300" y="180">at target after 10 s</text> <text x="300" y="194">percolation wait</text> <text x="515" y="278" text-anchor="middle">below target, under the 10 pulse cap: pulse again</text> </g> <!-- update rate note --> <text x="30" y="282" font-size="11" fill="var(--ink-muted)">update interval 500 ms</text> </g> </svg> <figcaption>
+The pulse-and-soak loop. Watering is a single fixed pulse and the
+    measurement is only re-read after percolation has had time to happen, which
+    is the design decision the whole controller hangs on.
+<span class="figcaption__source">Source: ECE 167 final report.</span> </figcaption> </figure> <h2>Results</h2> <div class="table-wrap"> <table> <caption>Validation results</caption> <thead> <tr> <th scope="col"> Test </th><th scope="col"> Result </th> </tr> </thead> <tbody> <tr> <th scope="row"> Reservoir level accuracy, 5 known heights, 3 readings each </th><td>all within +/-3 mm against a +/-5 mm goal</td> </tr><tr> <th scope="row"> Integrated watering, 10 trials </th><td class="hi">10 of 10 reached target within +/-5 percent VWC</td> </tr><tr> <th scope="row"> Pulse efficiency </th><td class="hi">9 of 10 trials converged on a single 500 ms pulse</td> </tr><tr> <th scope="row"> Overwatering cap </th><td>verified by isolating the sensor from delivered water; system halted at the cap</td> </tr><tr> <th scope="row"> Low-reservoir inhibit </th><td>pump refused to run below threshold, resumed after refill</td> </tr><tr> <th scope="row"> Sample-to-sample variation, stable environment </th><td>under 1 percent VWC</td> </tr><tr> <th scope="row"> Control latency </th><td>approximately 500 ms, bounded by the update interval</td> </tr> </tbody> </table> </div> <p>
+That 9 of 10 trials converged on a single pulse is the result that says the
+    pulse size and soak interval were matched to the soil, rather than the system
+    simply iterating its way to target.
+</p> <h2>Scope of the measurement</h2> <p>
+Volumetric water content here is approximate. True calibration requires
+    gravimetric oven-dry analysis, which was not performed, so the percentages
+    are a repeatable index rather than an absolute soil physics measurement. The
+    endpoints are specific to general potting soil and would move for a different
+    medium. Moisture is sampled at a single point rather than across the root
+    zone, so the controller regulates the soil around the probe and assumes the
+    pot is representative. Stating those bounds is part of the result: a moisture
+    number without them is not a measurement.
+</p>  <h2>Artifacts</h2> <ul class="contact-list">  </ul> <nav class="case-nav" aria-label="Other case studies"> <a href="/portfolio/work/fortis"> <span class="label">Previous</span> <span class="case-nav__title">FORTIS</span> </a> <a href="/portfolio/work/walle" class="case-nav__next"> <span class="label">Next</span> <span class="case-nav__title">WALL-E block-sorting robot</span> </a> </nav> </div> </article>  </main> <footer class="site-footer"> <div class="shell" style="display:flex;flex-wrap:wrap;gap:0.4rem 1.5rem;justify-content:space-between;width:100%;"> <span>Nikhil Thankasala &middot; Robotics software engineer</span> <span>San Francisco Bay Area, CA</span> </div> </footer> </body></html>
