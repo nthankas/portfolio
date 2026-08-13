@@ -39,6 +39,21 @@ the firmware image. A checksummed packet protocol over the serial link updates
 them at runtime, with a packet queue so protocol handling does not stall the
 sampling path.
 
+**The protocol.** Coefficient updates arrive over a checksummed packet protocol
+with framing, length, id, payload and an iterative checksum, decoded into a
+packet queue so protocol handling never stalls the sampling path. Endianness is
+converted explicitly at the boundary, which is the kind of detail that either
+gets designed in or gets discovered as a corrupted filter three weeks later.
+
+**Why the buffer is circular.** The converter fills a circular buffer from its
+interrupt handler while the convolution reads behind it, so the filter always
+operates on the most recent 32 samples without either side blocking the other.
+The output converter is fed at the conversion rate, making the whole path
+deterministic from sample in to sample out.
+
 Front-panel switches select the active input channel, switch between two filter
 banks, and choose between absolute-value and peak-to-peak display modes, so the
 effect of a coefficient change is visible immediately on the hardware.
+
+**Ownership.** Solo build: sampling engine, filter, EEPROM driver, protocol and
+display.

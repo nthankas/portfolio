@@ -22,7 +22,6 @@ const ogUrl = ogImage ? new URL(withBase(ogImage), Astro.site ?? deploy.site) : 
 const nav = [
   { href: '#projects', label: 'projects' },
   { href: '#experience', label: 'experience' },
-  { href: '#skills', label: 'skills' },
   { href: '#contact', label: 'contact' },
 ];
 
@@ -39,29 +38,6 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical.href} />
-
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      href={withBase('/fonts/instrument-sans-latin-wght-normal.woff2')}
-      crossorigin="anonymous"
-    />
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      href={withBase('/fonts/instrument-serif-latin-400-normal.woff2')}
-      crossorigin="anonymous"
-    />
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      href={withBase('/fonts/ibm-plex-mono-latin-400-normal.woff2')}
-      crossorigin="anonymous"
-    />
-
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
@@ -108,8 +84,18 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
 
     <header class="site-header">
       <div class="shell site-header__inner">
-        <a class="wordmark" href={withBase('/')}>
-          Nikhil Thankasala<span class="sigil">.</span>
+        <a class="wordmark" href={withBase('/')} aria-label="Nikhil Thankasala, home">
+          <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <!-- Chamfered chassis outline with the four X-drive wheels at the
+                 45 degree corners. His robot, as a mark. -->
+            <path d="M13 4 H27 L36 13 V27 L27 36 H13 L4 27 V13 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"></path>
+            <line x1="7.5" y1="4.7" x2="4.7" y2="7.5" stroke="currentColor" stroke-width="2.4"></line>
+            <line x1="32.5" y1="4.7" x2="35.3" y2="7.5" stroke="currentColor" stroke-width="2.4"></line>
+            <line x1="4.7" y1="32.5" x2="7.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line>
+            <line x1="35.3" y1="32.5" x2="32.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line>
+            <text x="20" y="25.5" text-anchor="middle" font-size="13.5" font-weight="700" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" fill="currentColor" stroke="none">NT</text>
+          </svg>
+          <span class="wordmark__name">nikhil thankasala</span>
         </a>
         <nav class="site-nav" aria-label="Sections">
           {nav.map((n) => <a href={navHref(n.href)}>{n.label}</a>)}

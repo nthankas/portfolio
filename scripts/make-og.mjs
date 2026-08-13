@@ -27,7 +27,6 @@ import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const OUT = join(ROOT, 'public', 'og');
-const FONTS = join(ROOT, 'public', 'fonts');
 mkdirSync(OUT, { recursive: true });
 
 let chromium;
@@ -42,13 +41,6 @@ try {
 const W = 1200;
 const H = 630;
 
-const dataUri = (file) =>
-  `data:font/woff2;base64,${readFileSync(join(FONTS, file)).toString('base64')}`;
-
-const monoRegular = dataUri('ibm-plex-mono-latin-400-normal.woff2');
-const displaySerif = dataUri('instrument-serif-latin-400-normal.woff2');
-const sansVariable = dataUri('instrument-sans-latin-wght-normal.woff2');
-
 const esc = (s) =>
   String(s)
     .replace(/&/g, '&amp;')
@@ -58,10 +50,6 @@ const esc = (s) =>
 function page({ kind, title, summary, chips }) {
   return `<!doctype html>
 <html><head><meta charset="utf-8"><style>
-  @font-face { font-family: 'IBM Plex Mono'; src: url('${monoRegular}') format('woff2'); font-weight: 400; }
-  @font-face { font-family: 'Instrument Serif'; src: url('${displaySerif}') format('woff2'); font-weight: 400; }
-  @font-face { font-family: 'Instrument Sans'; src: url('${sansVariable}') format('woff2-variations'); font-weight: 400 700; }
-
   :root {
     --paper: #f7f8f9;
     --ink: #14171a;
@@ -78,12 +66,12 @@ function page({ kind, title, summary, chips }) {
     background: var(--paper);
     padding: 56px 80px 44px;
     display: flex; flex-direction: column;
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   .label {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 18px; font-weight: 400;
     letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--muted);
@@ -92,13 +80,13 @@ function page({ kind, title, summary, chips }) {
   }
 
   h1 {
-    font-family: 'Instrument Serif', serif;
-    font-weight: 400;
-    font-size: ${title.length > 22 ? 72 : 96}px;
-    line-height: 1.02;
-    letter-spacing: -0.01em;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    font-size: ${title.length > 22 ? 58 : 76}px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
     color: var(--ink);
-    margin-top: 64px;
+    margin-top: 68px;
   }
 
   .summary {
@@ -117,7 +105,7 @@ function page({ kind, title, summary, chips }) {
   }
 
   .chips span {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 19px; color: var(--muted);
     background: var(--wash); border: 1px solid var(--rule);
     padding: 5px 13px; white-space: nowrap;
@@ -126,12 +114,12 @@ function page({ kind, title, summary, chips }) {
   footer {
     margin-top: 22px; padding-top: 18px;
     border-top: 1px solid var(--rule);
-    display: flex; justify-content: space-between;
-    font-family: 'IBM Plex Mono', monospace;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 18px;
   }
 
-  footer .mark { font-family: 'Instrument Serif', serif; font-size: 24px; letter-spacing: 0; color: var(--ink); }
+  footer .mark { display: flex; align-items: center; gap: 10px; font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 20px; color: var(--ink); }
   footer .tag { color: var(--muted); }
   .dot { color: var(--accent); }
 </style></head>
@@ -141,7 +129,7 @@ function page({ kind, title, summary, chips }) {
   <p class="summary">${esc(summary)}</p>
   <div class="chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</div>
   <footer>
-    <span class="mark">Nikhil Thankasala<span class="dot">.</span></span>
+    <span class="mark"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M13 4 H27 L36 13 V27 L27 36 H13 L4 27 V13 Z" stroke="#14171a" stroke-width="2"/><line x1="7.5" y1="4.7" x2="4.7" y2="7.5" stroke="#0a4488" stroke-width="2.4"/><line x1="32.5" y1="4.7" x2="35.3" y2="7.5" stroke="#0a4488" stroke-width="2.4"/><line x1="4.7" y1="32.5" x2="7.5" y2="35.3" stroke="#0a4488" stroke-width="2.4"/><line x1="35.3" y1="32.5" x2="32.5" y2="35.3" stroke="#0a4488" stroke-width="2.4"/><text x="20" y="25.5" text-anchor="middle" font-size="13.5" font-weight="700" font-family="Arial" fill="#14171a">NT</text></svg>Nikhil Thankasala</span>
     <span class="tag">robotics software<span class="dot">.</span></span>
   </footer>
 </body></html>`;

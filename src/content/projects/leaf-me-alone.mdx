@@ -27,6 +27,7 @@ description: 'A closed-loop autonomous irrigation controller on an STM32F411RE, 
 
 import DataTable from '../../components/DataTable.astro';
 import LeafControlDiagram from '../../components/LeafControlDiagram.astro';
+import LeafSignalDiagram from '../../components/LeafSignalDiagram.astro';
 
 Most hobby irrigation systems threshold a raw sensor value and switch a pump.
 That fails for a physical reason. Water takes time to percolate to the sensor,
@@ -72,6 +73,8 @@ approximate 10 to 50 percent volumetric water content scale for potting soil
 rather than a naive 0 to 100 percent, because 100 percent volumetric water
 content is physically impossible in soil. The endpoint values come from
 published soil-science reference ranges.
+
+<LeafSignalDiagram />
 
 Reservoir level is measured by an ultrasonic rangefinder mounted above the
 reservoir, driven by a timer-based state machine with interrupt edge capture on

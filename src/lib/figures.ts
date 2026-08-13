@@ -196,6 +196,22 @@ const registry: Record<string, Entry> = {
     source: 'FORTIS fabrication photograph.',
   },
 
+  'fortis-front-face': {
+    file: 'fortis/fortis-fabrication-front-view.png',
+    alt: 'Head-on photograph of the assembled chassis at bench height. The two front omni wheels with their double roller rings dominate the frame, the front depth camera is mounted on a black bracket at the top centre of the aluminum face, and the word front is hand-written on the panel below it.',
+    caption:
+      'The face that leads during the orbit: front depth camera on its bracket, wheels toed at 45 degrees. The handwriting is the fabrication-floor way of keeping the camera extrinsics honest.',
+    source: 'FORTIS fabrication photograph.',
+  },
+
+  'fortis-motor-rollers': {
+    file: 'fortis/fortis-endoskeleton-build-b.png',
+    alt: 'Photograph of a large black brushless outrunner motor on its square mounting plate, lying on a steel table next to a row of white 3D printed belly idler roller assemblies, each a bar with rounded roller ends and printed mounting bosses.',
+    caption:
+      'One of the four direct-drive outrunners beside the printed belly idler rollers. The rollers are what carry the chassis over the port lip during entry, and they never touch the floor during normal driving.',
+    source: 'FORTIS fabrication photograph.',
+  },
+
   // -------------------------------------------------------------- WALL-E ---
 
   'walle-hsm-whiteboard': {

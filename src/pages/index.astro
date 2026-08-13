@@ -5,7 +5,6 @@ import ProjectEntry from '../components/ProjectEntry.astro';
 import DataTable from '../components/DataTable.astro';
 import FigurePair from '../components/FigurePair.astro';
 import { experience, education } from '../data/experience';
-import { skills } from '../data/skills';
 import { repoIndex } from '../data/repos';
 import { owner, siteMeta, resume } from '../site.config';
 
@@ -35,9 +34,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           engineering usually is.
         </p>
         <p>
-          I am finishing a B.S. in Robotics Engineering and an M.S. in Electrical
-          and Computer Engineering on the robotics and controls track, both at UC
-          Santa Cruz. I am looking for robotics software roles.
+          I hold a B.S. in Robotics Engineering and am completing an M.S. in
+          Electrical and Computer Engineering on the Robotics, Controls, and
+          Cyber-Physical Systems track, both at UC Santa Cruz. Robotics software
+          is where I want to work.
         </p>
       </div>
 
@@ -77,39 +77,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       <FigurePair ids={['fortis-chassis-built', 'fortis-isaac-viewport']} eager />
     </div>
 
-    <!-- -------------------------------------------------------- currently -->
-    <section class="section" aria-labelledby="currently-heading">
-      <div class="section__head">
-        <h2 id="currently-heading">Currently</h2>
-      </div>
-      <div class="split">
-        <div>
-          <p>
-            I am at Charge Robotics in San Leandro, working on a multi-arm
-            autonomous solar installation robot. I own the end-to-end safety and
-            monitoring system across the stack, from the controller up to the
-            operator interface, alongside work on real-time device communication
-            and proximity sensing.
-          </p>
-          <p>
-            On my own time I am continuing the tokamak inspection robot stack:
-            the perception chain and the localization filter are the parts still
-            moving.
-          </p>
-        </div>
-        <dl class="meta">
-          <div>
-            <dt>Since</dt>
-            <dd>June 2026</dd>
-          </div>
-          <div>
-            <dt>Graduating</dt>
-            <dd>M.S. June 2027</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
     <!-- --------------------------------------------------------- projects -->
     <section class="section" id="projects" aria-labelledby="projects-heading">
       <div class="section__head">
@@ -126,13 +93,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
             { head: 'Repository' },
             { head: 'What it does' },
             { head: 'Language' },
-            { head: 'Last push', align: 'num' },
           ]}
-          rows={repoIndex.map((r) => [r.name, r.summary, r.language, r.pushed])}
+          rows={repoIndex.map((r) => [r.name, r.summary, r.language])}
         />
         <p class="comment">
-          Written from the source, not from repository descriptions. Sorted by
-          last push, descending.
+          Written from the source, not from repository descriptions.
         </p>
       </div>
     </section>
@@ -179,28 +144,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           columns={[{ head: 'Degree' }, { head: 'Detail' }, { head: 'Institution' }, { head: 'Dates' }]}
           rows={education.map((e) => [e.degree, e.detail, e.org, e.dates])}
         />
-      </div>
-    </section>
-
-    <!-- ----------------------------------------------------------- skills -->
-    <section class="section" id="skills" aria-labelledby="skills-heading">
-      <div class="section__head">
-        <h2 id="skills-heading">Skills</h2>
-        <span class="section__note">grouped by domain</span>
-      </div>
-      <div class="skills">
-        {
-          skills.map((group) => (
-            <section>
-              <h3>{group.name}</h3>
-              <ul>
-                {group.items.map((item) => (
-                  <li>{item}</li>
-                ))}
-              </ul>
-            </section>
-          ))
-        }
       </div>
     </section>
 

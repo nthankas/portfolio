@@ -37,6 +37,7 @@ description: 'FORTIS is a tethered holonomic inspection robot for the interior o
 ---
 
 import Figure from '../../components/Figure.astro';
+import FigurePair from '../../components/FigurePair.astro';
 import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
 import {
@@ -112,6 +113,8 @@ margin were computed against exactly the same population of poses rather than
 two different ones.
 
 <DataTable {...armResults} />
+
+<FigurePair ids={['fortis-mc-sampling', 'fortis-poloidal-map']} />
 
 <Figure id="fortis-arm-torque" />
 
@@ -228,6 +231,8 @@ turning over it. X-drive beat mecanum on mechanical grounds, since 90 degree
 rollers are simpler than 45 degree ones and the 45 degree corner mounting falls
 naturally out of the chamfered chassis.
 
+<Figure id="fortis-endoskeleton-cad" />
+
 <Figure id="fortis-internal-layout" />
 
 I designed the arm around two constraints that fight each other: it has to reach
@@ -248,6 +253,8 @@ than itself.
 
 <Figure id="fortis-arm-stow" />
 
+<Figure id="fortis-arm-subsystem" />
+
 Coordinated multi-axis stepping runs on a dedicated microcontroller rather than
 the host, so trajectory timing does not depend on the operating system
 scheduler. The host holds the analytic inverse kinematics and the motion action
@@ -262,3 +269,7 @@ and toroidal orbit motion proved. Visual odometry across four simultaneous
 camera streams with inertial data retrieval. Commanded arm motion through the
 reach envelope with object pick and stow, and payload retained through the stow
 motion.
+
+<FigurePair ids={['fortis-machined-parts', 'fortis-welded-ring']} />
+
+<Figure id="fortis-front-face" />

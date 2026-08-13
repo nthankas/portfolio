@@ -41,9 +41,23 @@ Because each side committed before seeing the other's secret, neither can choose
 a secret that steers the outcome, and a revealed secret that does not match its
 commitment is detected as cheating rather than silently accepted.
 
-**The rest.** A top-level state machine drives negotiation, move submission and
-win detection across seven states. Board state tracks both fields on a 6 by 10
-grid with per-boat life tracking, random placement with collision avoidance, and
-guess generation for the opposing side. Both fields render side by side on a 128
-by 64 display, showing own boats and hits against unknown squares on the
-opponent's field.
+**Framing and pacing.** The link runs at one character per timer tick against a
+100 Hz timer, transmitting every tenth tick, so the protocol had to survive
+being spread across time rather than arriving as whole messages. The decoder is
+built for that: each character advances a state machine through frame start,
+payload, checksum and terminator, and an unexpected character at any state
+resets cleanly to hunting for the next frame start instead of corrupting the
+game. Host-side Python tools drive the same protocol from a PC, which is what
+made the link testable without a second board on the bench.
+
+**Game logic.** A top-level state machine drives negotiation, move submission
+and win detection across seven states: start, challenging, accepting,
+attacking, defending, waiting to send, and the end screen. Board state tracks
+both fields on a 6 by 10 grid with four boat classes of three to six cells,
+per-boat life tracking, random placement with collision avoidance, and guess
+generation for the opposing side. Both fields render side by side on a 128 by
+64 display, showing own boats and hits against unknown squares on the
+opponent's field, updated as results come back over the wire.
+
+**Ownership.** Solo build: protocol, negotiation, game logic, field management
+and display.
