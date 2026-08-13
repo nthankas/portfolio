@@ -60,11 +60,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         </figcaption>
       </figure>
     ) : (
-      <p class="clip__pending">
-        <span class="label">Clip pending publication</span>
-        <br />
-        {clip.caption}
-      </p>
+      <p class="clip__pending">{clip.caption}</p>
     )
   }
 </div>

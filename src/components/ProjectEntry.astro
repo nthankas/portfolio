@@ -76,18 +76,16 @@ const headingId = `project-${entry.id}`;
         )
       }
       {
-        d.artifacts.map((a) => (
-          <li>
-            <span class="label">{a.label}</span>
-            {a.href ? (
+        d.artifacts
+          .filter((a) => a.href)
+          .map((a) => (
+            <li>
+              <span class="label">{a.label}</span>
               <a href={a.href} rel="noopener">
                 {a.href.replace(/^https?:\/\//, '')}
               </a>
-            ) : (
-              <span style="color:var(--ink-muted)">{a.note ?? 'not yet published'}</span>
-            )}
-          </li>
-        ))
+            </li>
+          ))
       }
     </ul>
   </div>

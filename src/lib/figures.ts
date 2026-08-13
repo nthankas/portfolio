@@ -65,7 +65,7 @@ const registry: Record<string, Entry> = {
     alt: 'Line chart of per-wheel torque against commanded orbit speed from 0.10 to 0.30 meters per second. Four solid lines show 95th-percentile torque per wheel and four dashed lines show mean torque. The front-left wheel is highest throughout, rising from 3.44 to 4.10 newton meters. The other three wheels track between 2.06 and 3.49 newton meters. Horizontal reference lines mark motor continuous ratings at 3.32, 4.98 and 5.81 newton meters.',
     caption:
       'Worst-wheel 95th-percentile torque stays under the 60 A continuous rating of 4.98 Nm across the whole speed range. The front-left wheel runs consistently highest because the arm center of gravity sits forward of chassis center.',
-    source: 'Isaac Sim orbit sweep, 5-sphere roller model. Regenerated from the repository results set.',
+    source: 'Isaac Sim orbit sweep, 5-sphere roller model.',
   },
 
   'fortis-arm-torque': {
@@ -82,7 +82,7 @@ const registry: Record<string, Entry> = {
     caption:
       'Reachable end-effector positions inside the vessel envelope, colored by tipping margin. The arm base sits at the chassis on the step and the reachable set stays clear of the center stack and the outer wall.',
     source:
-      'Isaac Sim Monte Carlo sweep, plotted against the DIII-D poloidal cross-section. Pose counts on the plot come from an earlier filter revision than the tables on this page.',
+      'Isaac Sim Monte Carlo sweep, plotted against the DIII-D poloidal cross-section. Pose counts on the plot are from an earlier filter revision than the tables.',
   },
 
   'fortis-mc-sampling': {
