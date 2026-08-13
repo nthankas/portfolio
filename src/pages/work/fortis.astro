@@ -5,6 +5,7 @@ import Figure from '../../components/Figure.astro';
 import FigurePair from '../../components/FigurePair.astro';
 import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
+import FortisPerceptionDiagram from '../../components/FortisPerceptionDiagram.astro';
 import {
   capabilityTiers,
   chassisRequirements,
@@ -416,6 +417,8 @@ if (!entry) throw new Error('Missing project entry: fortis');
     then verified live on the compute module, which is what makes the perception
     tests runnable by anyone on the team without the robot.
   </p>
+
+  <FortisPerceptionDiagram />
 
   <h3>State estimation</h3>
 

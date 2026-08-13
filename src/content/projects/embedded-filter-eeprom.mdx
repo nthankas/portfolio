@@ -22,6 +22,8 @@ openQuestions:
 description: 'A mixed-signal chain on PIC32: four-channel ADC into a 32-tap FIR filter into an SPI DAC, with filter coefficients stored in external EEPROM and updatable at runtime over a checksummed UART protocol.'
 ---
 
+import FilterSignalDiagram from '../../components/FilterSignalDiagram.astro';
+
 A mixed-signal path on a PIC32: analog in, filtered, analog out, with the filter
 itself treated as data rather than as code.
 
@@ -38,6 +40,8 @@ polling, so a bank survives power cycling and can be swapped without touching
 the firmware image. A checksummed packet protocol over the serial link updates
 them at runtime, with a packet queue so protocol handling does not stall the
 sampling path.
+
+<FilterSignalDiagram />
 
 **The protocol.** Coefficient updates arrive over a checksummed packet protocol
 with framing, length, id, payload and an iterative checksum, decoded into a

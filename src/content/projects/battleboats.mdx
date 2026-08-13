@@ -21,6 +21,8 @@ openQuestions:
 description: 'A two-player Battleship game across two PIC32 boards over UART, with a checksummed message protocol and a commitment scheme that makes the opening coin flip verifiable.'
 ---
 
+import BattleboatsProtocolDiagram from '../../components/BattleboatsProtocolDiagram.astro';
+
 Two Uno32 boards play a turn-based game against each other over a crossed UART
 link. The game itself is the easy part; the parts worth writing up are the link
 and the trust problem.
@@ -40,6 +42,8 @@ are exchanged, then both secrets are revealed and combined into the coin flip.
 Because each side committed before seeing the other's secret, neither can choose
 a secret that steers the outcome, and a revealed secret that does not match its
 commitment is detected as cheating rather than silently accepted.
+
+<BattleboatsProtocolDiagram />
 
 **Framing and pacing.** The link runs at one character per timer tick against a
 100 Hz timer, transmitting every tenth tick, so the protocol had to survive

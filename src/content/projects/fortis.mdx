@@ -40,6 +40,7 @@ import Figure from '../../components/Figure.astro';
 import FigurePair from '../../components/FigurePair.astro';
 import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
+import FortisPerceptionDiagram from '../../components/FortisPerceptionDiagram.astro';
 import {
   capabilityTiers,
   chassisRequirements,
@@ -202,6 +203,8 @@ with feature count while the gyroscope stays uniform. The gyroscope owns yaw
 outright. Each translation source fails a different way, one by slip and one by
 tracking loss, so each is followed according to its own covariance and neither
 is ever trusted for heading.
+
+<FortisPerceptionDiagram />
 
 Because the cameras cannot stream inside the development container, I built a
 synthetic camera rig that publishes the exact topic contract of the real

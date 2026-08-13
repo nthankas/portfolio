@@ -1,0 +1,63 @@
+---
+/**
+ * The BattleBoats negotiation and turn protocol as a sequence diagram.
+ * Message types and the commitment scheme are from the repository.
+ */
+---
+
+<figure>
+  <svg
+    viewBox="0 0 740 330"
+    role="img"
+    aria-label="Sequence diagram between board A and board B. Board A sends a challenge carrying a hash commitment of its secret. Board B answers with an accept carrying its own secret. Board A then sends a reveal disclosing its secret, and both boards compute the coin flip from the two secrets, with board B checking the revealed secret against the earlier hash so cheating is detected. Play then loops: shot messages carry coordinates one way and result messages carry hit, miss or sunk back, until one fleet is gone."
+    style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"
+  >
+    <defs>
+      <marker id="bbp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-muted)"></path>
+      </marker>
+    </defs>
+
+    <g font-family="var(--mono)" font-size="12" fill="var(--ink)">
+      <!-- lifelines -->
+      <rect x="80" y="20" width="120" height="34" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="140" y="42" text-anchor="middle" font-weight="600">board A</text>
+      <rect x="540" y="20" width="120" height="34" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="600" y="42" text-anchor="middle" font-weight="600">board B</text>
+
+      <g stroke="var(--rule)" stroke-width="1">
+        <line x1="140" y1="54" x2="140" y2="310"></line>
+        <line x1="600" y1="54" x2="600" y2="310"></line>
+      </g>
+
+      <!-- messages -->
+      <g stroke="var(--ink-muted)" fill="none" stroke-width="1.25" marker-end="url(#bbp-arrow)">
+        <line x1="140" y1="84" x2="596" y2="84"></line>
+        <line x1="600" y1="124" x2="144" y2="124"></line>
+        <line x1="140" y1="164" x2="596" y2="164"></line>
+        <line x1="140" y1="240" x2="596" y2="240"></line>
+        <line x1="600" y1="280" x2="144" y2="280"></line>
+      </g>
+
+      <g font-size="11">
+        <text x="370" y="76" text-anchor="middle">CHA: hash commitment of secret A</text>
+        <text x="370" y="116" text-anchor="middle">ACC: secret B</text>
+        <text x="370" y="156" text-anchor="middle">REV: secret A revealed</text>
+        <text x="370" y="232" text-anchor="middle">SHO: target coordinates</text>
+        <text x="370" y="272" text-anchor="middle">RES: hit, miss or sunk</text>
+      </g>
+
+      <g font-size="10" fill="var(--ink-muted)">
+        <text x="370" y="192" text-anchor="middle">coin flip = f(secret A, secret B); B verifies A against the commitment,</text>
+        <text x="370" y="206" text-anchor="middle">so a doctored reveal is caught instead of silently accepted</text>
+        <text x="370" y="306" text-anchor="middle">turn loop repeats until one fleet is gone; every frame checksummed</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption>
+    The negotiation handshake and turn loop. Committing to a hash before seeing
+    the opponent's secret is what makes the opening coin flip fair between two
+    boards that cannot trust each other.
+    <span class="figcaption__source">Source: repository protocol and negotiation modules.</span>
+  </figcaption>
+</figure>

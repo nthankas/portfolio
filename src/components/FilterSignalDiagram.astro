@@ -1,0 +1,91 @@
+---
+/**
+ * The mixed-signal path of the embedded FIR filter, typeset as an inline SVG.
+ * Structure is from the repository: ISR-fed circular buffer, 32-tap FIR,
+ * SPI DAC synchronized to the conversion rate, and coefficient banks held in
+ * external EEPROM behind a checksummed UART protocol.
+ */
+---
+
+<figure>
+  <svg
+    viewBox="0 0 740 300"
+    role="img"
+    aria-label="Signal path diagram. Top lane: four analog inputs enter a scanning analog to digital converter driven from its interrupt handler, fill a circular buffer, pass through a 32 tap FIR convolution, and leave through a DAC over SPI synchronized to the conversion rate. Bottom lane: UART packets enter a packet queue, update coefficient banks, and the banks are stored in external EEPROM over I2C; the active bank feeds the FIR block."
+    style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"
+  >
+    <defs>
+      <marker id="fsd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-muted)"></path>
+      </marker>
+    </defs>
+
+    <g font-family="var(--mono)" font-size="12" fill="var(--ink)">
+      <g font-size="10" fill="var(--ink-muted)" letter-spacing="1.5">
+        <text x="20" y="28">SIGNAL PATH</text>
+        <text x="20" y="188">COEFFICIENT PATH</text>
+      </g>
+
+      <!-- signal lane -->
+      <rect x="20" y="42" width="104" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="72" y="60" text-anchor="middle">4 analog</text>
+      <text x="72" y="76" text-anchor="middle">inputs</text>
+
+      <rect x="164" y="42" width="110" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="219" y="60" text-anchor="middle">ADC scan,</text>
+      <text x="219" y="76" text-anchor="middle">ISR-driven</text>
+
+      <rect x="314" y="42" width="110" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="369" y="60" text-anchor="middle">circular</text>
+      <text x="369" y="76" text-anchor="middle">buffer</text>
+
+      <rect x="464" y="42" width="110" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="519" y="60" text-anchor="middle">32-tap FIR</text>
+      <text x="519" y="76" text-anchor="middle">convolution</text>
+
+      <rect x="614" y="42" width="106" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="667" y="60" text-anchor="middle">DAC over</text>
+      <text x="667" y="76" text-anchor="middle">SPI</text>
+
+      <!-- coefficient lane -->
+      <rect x="20" y="202" width="120" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="80" y="220" text-anchor="middle">UART packets,</text>
+      <text x="80" y="236" text-anchor="middle">checksummed</text>
+
+      <rect x="200" y="202" width="110" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="255" y="220" text-anchor="middle">packet</text>
+      <text x="255" y="236" text-anchor="middle">queue</text>
+
+      <rect x="370" y="202" width="120" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="430" y="220" text-anchor="middle">coefficient</text>
+      <text x="430" y="236" text-anchor="middle">banks</text>
+
+      <rect x="560" y="202" width="140" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect>
+      <text x="630" y="220" text-anchor="middle">EEPROM over</text>
+      <text x="630" y="236" text-anchor="middle">I2C, persistent</text>
+
+      <!-- arrows -->
+      <g stroke="var(--ink-muted)" fill="none" stroke-width="1.25" marker-end="url(#fsd-arrow)">
+        <line x1="124" y1="64" x2="160" y2="64"></line>
+        <line x1="274" y1="64" x2="310" y2="64"></line>
+        <line x1="424" y1="64" x2="460" y2="64"></line>
+        <line x1="574" y1="64" x2="610" y2="64"></line>
+        <line x1="140" y1="224" x2="196" y2="224"></line>
+        <line x1="310" y1="224" x2="366" y2="224"></line>
+        <line x1="490" y1="224" x2="556" y2="224"></line>
+        <line x1="600" y1="198" x2="530" y2="90"></line>
+      </g>
+
+      <g font-size="10" fill="var(--ink-muted)">
+        <text x="540" y="150">active bank loads into the filter</text>
+        <text x="20" y="130">output cadence is set by the converter, so the path is deterministic from sample in to sample out</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption>
+    The two paths that never block each other: samples flow through the filter
+    at the conversion rate while coefficient updates arrive asynchronously,
+    survive power cycles in EEPROM, and swap in without a rebuild.
+    <span class="figcaption__source">Source: repository ADC, filter, EEPROM and protocol modules.</span>
+  </figcaption>
+</figure>
