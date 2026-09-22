@@ -19,14 +19,8 @@ const others = d.artifacts.filter((a) => a.href && a !== repo);
 
 <details class="proj" id={entry.id}>
   <summary>
-    {
-      lead ? (
-        <Image class="thumb" src={lead.src} alt={lead.alt} width={340} densities={[1, 2]} loading="lazy" />
-      ) : (
-        <div class="thumb-empty" aria-hidden="true" />
-      )
-    }
-    <div>
+    {lead && <Image class="thumb" src={lead.src} alt={lead.alt} width={340} densities={[1, 2]} loading="lazy" />}
+    <div class={lead ? undefined : 'no-thumb'}>
       <h3>{d.title}</h3>
       <div><span class="tag">{d.org}</span></div>
       <p class="blurb">{d.thesis}</p>

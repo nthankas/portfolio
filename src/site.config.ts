@@ -49,7 +49,7 @@ export const owner = {
  * rendered.
  */
 export const resume = {
-  file: null as string | null,
+  file: 'nikhil-thankasala-resume.pdf' as string | null,
   label: 'Resume',
 };
 
@@ -57,5 +57,5 @@ export const siteMeta = {
   title: 'Nikhil Thankasala',
   role: 'Robotics software engineer',
   description:
-    'Robotics software engineer working on software architecture, simulation, and perception. Senior design technical lead on a tokamak inspection robot; robotics software intern at Charge Robotics.',
+    'Robotics software engineer working on software architecture, simulation, and perception. Senior design technical lead on a tokamak inspection robot; recently a robotics software intern at Charge Robotics and Ambi Robotics.',
 };

@@ -11,7 +11,7 @@ const projects = (await getCollection('projects')).sort(
 );
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const now = experience[0];
+const recent = experience.slice(0, 2);
 const resumeHref = resume.file
   ? `${base}/${resume.file}`
   : `mailto:${owner.email}?subject=Resume%20request`;
@@ -31,7 +31,7 @@ const resumeHref = resume.file
           <div class="box-title">Personal info</div>
           <dl class="kv" style="padding-top:10px">
             <dt>Recently</dt>
-            <dd>{now.title} at {now.org}</dd>
+            <dd>Robotics software intern at {recent.map((r) => r.org).join(' and ')}</dd>
             <dt>Location</dt>
             <dd>{owner.location}</dd>
             <dt>Focus</dt>
@@ -77,12 +77,18 @@ const resumeHref = resume.file
       </div>
 
       <div class="box">
-        <div class="box-title">Working on currently</div>
+        <div class="box-title">Recently worked on</div>
         <div class="box-body">
-          <p><strong>{now.org}</strong><br />{now.title}, {now.dates}</p>
-          <ul>
-            {now.stack.map((s) => <li>{s}</li>)}
-          </ul>
+          {
+            recent.map((r, i) => (
+              <div style={i ? 'margin-top:14px;padding-top:12px;border-top:1px dashed var(--rule)' : ''}>
+                <p><strong>{r.org}</strong><br />{r.title}, {r.dates}</p>
+                <ul>
+                  {r.stack.map((s) => <li>{s}</li>)}
+                </ul>
+              </div>
+            ))
+          }
         </div>
       </div>
 

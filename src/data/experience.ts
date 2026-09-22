@@ -1,9 +1,8 @@
 /**
  * Experience entries, reverse chronological.
  *
- * Both employer entries are written to the proprietary discipline in the build
- * brief: domain and responsibility only, no internal names, no line specifics.
- * Wording for both was dictated by the owner and is confirmed.
+ * The Charge Robotics entry follows the owner's September 2026 resume. The
+ * Ambi Robotics wording was dictated by the owner and is confirmed.
  */
 
 export interface Role {
@@ -23,9 +22,9 @@ export const experience: Role[] = [
     org: 'Charge Robotics',
     title: 'Robotics Software Engineering Intern',
     location: 'San Leandro, CA',
-    dates: 'June 2026 to present',
-    body: 'I am one of five software engineers on a multi-arm autonomous solar installation robot, in charge of the software stack including the end-to-end safety and monitoring system, from the safety controller up through the operator interface. The work spans controls and real-time device communication, networking and distributed communication across the robotic stack, and sensor fusion for proximity awareness, including distance sensing integrated over IO-Link so the system keeps real-time awareness during autonomous operation. I integrated brushless DC motor firmware for a custom screwdriver end-effector, and I am helping design and bring up the software for a new system the company has created.',
-    stack: ['Software stack ownership', 'Safety systems', 'Controls', 'Real-time comms', 'Sensor fusion', 'Bring-up'],
+    dates: 'June 2026 to September 2026',
+    body: 'I was one of five software engineers on a multi-arm autonomous solar installation robot, and I redesigned and owned its safety system, spanning the stack from the safety controller to the operator interface. I shipped a production EtherNet/IP safety driver that decodes gate and emergency-stop interlock chains into live safety states, so the autonomy software is e-stop and pause aware, and streamed safety, fault and task-state telemetry into InfluxDB with Grafana dashboards for cell uptime and downtime. I developed the software and firmware for a servo-driven screwdriver end-effector over CANopen, replacing a commercial fastening tool in production with a two-phase speed-to-torque fastening sequence, built a real-time fasten-phase detection pipeline for error-aware fault handling and recovery on every cycle, and added process quality indicator monitoring for all IO-Link sensors, reported through the robot heartbeat.',
+    stack: ['Safety systems', 'EtherNet/IP', 'CANopen', 'IO-Link', 'Motor control', 'InfluxDB and Grafana'],
     status: 'confirmed',
     openQuestions: [],
   },
