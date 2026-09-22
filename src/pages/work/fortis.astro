@@ -51,7 +51,9 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <DataTable {...capabilityTiers} />
 
-  <FigurePair ids={['fortis-r0-port', 'fortis-diverter-step']} />
+  <Figure id="fortis-r0-port" />
+
+  <Figure id="fortis-diverter-step" />
 
   <h2>What I owned</h2>
 
@@ -393,8 +395,10 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <Figure id="fortis-internal-layout" />
   <Figure id="fortis-wiring-asbuilt" />
-  <FigurePair ids={['fortis-machined-parts', 'fortis-welded-ring']} />
+  <div class="build-gallery">
+    <FigurePair ids={['fortis-machined-parts', 'fortis-welded-ring']} />
+    <FigurePair ids={['fortis-chassis-front', 'fortis-front-face']} />
+  </div>
   <Figure id="fortis-motor-rollers" />
-  <FigurePair ids={['fortis-chassis-front', 'fortis-front-face']} />
   <Figure id="fortis-chassis-built" />
 </CaseStudy>

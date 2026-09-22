@@ -343,6 +343,9 @@ figcaption .figcaption__source { display: block; font-size: 12px; color: var(--i
 .figure-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
 .figure-pair figure { margin: 0; }
 
+/* photo gallery: crop mixed portrait and landscape shots to one frame */
+.build-gallery .figure-pair img { aspect-ratio: 4 / 3; object-fit: cover; }
+
 .clip { margin: 18px 0; }
 .clip video, .clip iframe {
   width: 100%;
