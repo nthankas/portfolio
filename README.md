@@ -1,7 +1,9 @@
 # Portfolio
 
 Personal engineering portfolio for Nikhil Thankasala. Astro, zero client-side
-JavaScript, one stylesheet.
+JavaScript, one plain stylesheet. The look is deliberately homemade: a solid
+navy title bar, bordered boxes with colored headers, system fonts, underlined
+links. No web fonts, no logo, no animation.
 
 ```bash
 npm install
@@ -20,9 +22,10 @@ src/
   data/                 experience, skills, repo index, FORTIS tables, videos
   lib/figures.ts        figure registry: image, alt text, caption, source
   components/           Figure, FigurePair, DataTable, Clip, ProjectEntry
-  layouts/              Base, CaseStudy
-  pages/                index.astro and the /work/* case studies
-  styles/global.css     the whole design system, including the print stylesheet
+  layouts/              Base (title bar, footer), CaseStudy (title bar plus boxed body)
+  pages/                index.astro (sidebar plus Projects, Experience, Contact boxes)
+                        and the /work/* case studies
+  styles/global.css     the whole stylesheet, including the print rules
 scripts/
   check-gaps.mjs        lists unresolved fields; fails the build on placeholders
   make-og.mjs           generates Open Graph images from the site's typography
@@ -32,9 +35,9 @@ scripts/
 ## Open Graph images
 
 `public/og/*.png` are committed artifacts, one per route with a case study plus
-one for the home page. They are laid out in HTML using the site's own font files
-and palette, then screenshotted with headless Chromium, so a card cannot drift
-from the site it advertises.
+one for the home page. They are laid out in HTML using the site's own palette,
+then screenshotted with headless Chromium, so a card cannot drift from the site
+it advertises.
 
 They are not regenerated during `npm run build`, so CI needs no browser. Run
 `npm run og` after changing a project `title` or `thesis`, or after touching the
@@ -153,11 +156,15 @@ Pages by itself. For Vercel instead, set the framework preset to Astro, leave
 the build command as `npm run build` and the output directory as `dist`, and
 set `base` to `/`.
 
+## Adding the headshot
+
+Put the image under `public/` and set `owner.photo` in `src/site.config.ts` to
+its filename. The photo box above the name card is omitted while it is null.
+
 ## Constraints this site holds to
 
-- Zero client-side JavaScript on every route. Project cards are native
+- Zero client-side JavaScript on every route. Project rows are native
   `<details>`, so they expand without JS and their content stays in the DOM for
   in-page search and for print.
-- Body text at 7:1 contrast or better, verified with axe at WCAG AAA.
 - A print stylesheet that expands every disclosure and resolves link targets, so
   printing a case study produces a clean document.

@@ -4,7 +4,7 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 interface Props {
   entry: CollectionEntry<'projects'>;
-  /** Overrides the entry thesis for the standfirst, which runs to two sentences. */
+  /** Two-sentence opener shown under the title bar. */
   standfirst: string;
 }
 
@@ -12,7 +12,9 @@ const { entry, standfirst } = Astro.props;
 const d = entry.data;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-// Neighbouring case studies in priority order, for the footer navigation.
+const links = d.artifacts.filter((a) => a.href);
+
+// Previous and next case study, in priority order.
 const studies = (await getCollection('projects', (p) => p.data.caseStudy))
   .sort((a, b) => a.data.priority - b.data.priority);
 const i = studies.findIndex((p) => p.id === entry.id);
@@ -25,81 +27,48 @@ const next = i >= 0 && i < studies.length - 1 ? studies[i + 1] : null;
   description={d.description}
   ogImage={`/og/${entry.id}.png`}
 >
-  <article class="shell">
-    <header class="case-head split">
-      <div>
-        <a class="backlink" href={`${base}/#projects`}>All projects</a>
-        <h1>{d.title}</h1>
-        <p class="lede">{standfirst}</p>
-      </div>
-      <dl class="meta">
-        <div>
-          <dt>Role</dt>
-          <dd>{d.role}</dd>
-        </div>
-        <div>
-          <dt>Context</dt>
-          <dd>{d.org}</dd>
-        </div>
-        <div>
-          <dt>Dates</dt>
-          <dd>{d.dates}</dd>
-        </div>
-        {
-          d.team && (
-            <div>
-              <dt>Team</dt>
-              <dd>{d.team}</dd>
-            </div>
-          )
-        }
-        <div>
-          <dt>Stack</dt>
-          <dd>{d.stack.join(', ')}</dd>
-        </div>
-      </dl>
-    </header>
+  <article class="wrap">
+    <div class="case-bar">
+      <h1>{d.title}</h1>
+      <nav aria-label="Project links">
+        {links.map((a) => <a href={a.href} rel="noopener">{a.label}</a>)}
+        <a class="close" href={`${base}/#projects`} aria-label="Back to all projects" title="Back to all projects">&#x2715;</a>
+      </nav>
+    </div>
 
-    <div class="case-body">
+    <div class="case">
+      <p class="lede">{standfirst}</p>
+
+      <dl class="facts">
+        <div><dt>Role</dt><dd>{d.role}</dd></div>
+        <div><dt>Context</dt><dd>{d.org}</dd></div>
+        <div><dt>Dates</dt><dd>{d.dates}</dd></div>
+        {d.team && <div><dt>Team</dt><dd>{d.team}</dd></div>}
+        <div><dt>Stack</dt><dd>{d.stack.join(', ')}</dd></div>
+      </dl>
+
       <slot />
 
-      <h2>Artifacts</h2>
-      <ul class="contact-list">
-        {
-          d.artifacts
-            .filter((a) => a.href)
-            .map((a) => (
-              <li>
-                <span class="label">{a.label}</span>
-                <a href={a.href} rel="noopener">
-                  {a.href.replace(/^https?:\/\//, '')}
-                </a>
-              </li>
-            ))
-        }
-      </ul>
+      {
+        links.length > 0 && (
+          <>
+            <h2>Links</h2>
+            <ul class="plain">
+              {links.map((a) => (
+                <li>
+                  <span class="label">{a.label}</span>
+                  <a href={a.href} rel="noopener">{a.href!.replace(/^https?:\/\//, '')}</a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
 
       <nav class="case-nav" aria-label="Other case studies">
-        {
-          prev ? (
-            <a href={`${base}/work/${prev.data.caseStudy}`}>
-              <span class="label">Previous</span>
-              <span class="case-nav__title">{prev.data.title}</span>
-            </a>
-          ) : (
-            <span />
-          )
-        }
-        {
-          next ? (
-            <a href={`${base}/work/${next.data.caseStudy}`} class="case-nav__next">
-              <span class="label">Next</span>
-              <span class="case-nav__title">{next.data.title}</span>
-            </a>
-          ) : (
-            <span />
-          )
-        }
+        {prev ? <a href={`${base}/work/${prev.data.caseStudy}`}>&lsaquo; {prev.data.title}</a> : <span />}
+        <a href={`${base}/#projects`}>All projects</a>
+        {next ? <a href={`${base}/work/${next.data.caseStudy}`}>{next.data.title} &rsaquo;</a> : <span />}
       </nav>
     </div>
   </article>

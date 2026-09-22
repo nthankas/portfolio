@@ -2,8 +2,6 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectEntry from '../components/ProjectEntry.astro';
-import DataTable from '../components/DataTable.astro';
-import FigurePair from '../components/FigurePair.astro';
 import { experience, education } from '../data/experience';
 import { repoIndex } from '../data/repos';
 import { owner, siteMeta, resume } from '../site.config';
@@ -13,6 +11,10 @@ const projects = (await getCollection('projects')).sort(
 );
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const now = experience[0];
+const resumeHref = resume.file
+  ? `${base}/${resume.file}`
+  : `mailto:${owner.email}?subject=Resume%20request`;
 ---
 
 <Base
@@ -21,158 +23,162 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   ogImage="/og/index.png"
   canonicalPath="/"
 >
-  <div class="shell">
-    <!-- ------------------------------------------------------------ intro -->
-    <section class="hero split" aria-labelledby="intro-heading">
-      <div>
-        <h1 id="intro-heading">{owner.name}</h1>
-        <p class="lede">
-          I am a robotics software engineer. I build the software layer of
-          physical systems: architecture, simulation, perception and state
-          estimation. Most of my work has been on robots that have to operate
-          inside constraints someone else fixed, which is where the interesting
-          engineering usually is.
+  <!-- intro band -->
+  <section class="intro" aria-label="Introduction">
+    <div class="wrap">
+      <div class="info">
+        <div class="box" style="margin:0;border:0;background:none">
+          <div class="box-title">Personal info</div>
+          <dl class="kv" style="padding-top:10px">
+            <dt>Recently</dt>
+            <dd>{now.title} at {now.org}</dd>
+            <dt>Location</dt>
+            <dd>{owner.location}</dd>
+            <dt>Focus</dt>
+            <dd>Robotics software architecture, simulation, perception</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="about">
+        <p>
+          hey, I'm Nikhil. I build the software layer of physical systems:
+          architecture, simulation, perception and state estimation.
         </p>
         <p>
-          I hold a B.S. in Robotics Engineering and am completing an M.S. in
-          Electrical and Computer Engineering on the Robotics, Controls, and
-          Cyber-Physical Systems track, both at UC Santa Cruz. Robotics software
-          is where I want to work.
+          Most of my work has been on robots that have to operate inside
+          constraints someone else fixed, which is where the interesting
+          engineering usually is.
         </p>
+        <div class="btn-row">
+          <a class="btn" href="#projects">projects</a>
+          <a class="btn" href="#experience">experience</a>
+          <a class="btn" href="#contact">contact</a>
+          <a class="btn" href={resumeHref}>resume</a>
+        </div>
       </div>
-
-      <dl class="meta">
-        <div>
-          <dt>Focus</dt>
-          <dd>Robotics software architecture, simulation, perception</dd>
-        </div>
-        <div>
-          <dt>Current</dt>
-          <dd>Robotics Software Engineering Intern, Charge Robotics</dd>
-        </div>
-        <div>
-          <dt>Location</dt>
-          <dd>{owner.location}</dd>
-        </div>
-        <div>
-          <dt>Primary stack</dt>
-          <dd>ROS 2, Python, C, Isaac Sim, Docker</dd>
-        </div>
-        <div>
-          <dt>Links</dt>
-          <dd>
-            <ul class="meta__links">
-              <li><a href={owner.githubUrl} rel="noopener">github</a></li>
-              <li><a href={owner.linkedinUrl} rel="noopener">linkedin</a></li>
-              <li><a href={`mailto:${owner.email}`}>email</a></li>
-            </ul>
-          </dd>
-        </div>
-      </dl>
-    </section>
-
-    <!-- Hardware, immediately: the built robot and the simulation it came
-         from, before any prose asks to be believed. -->
-    <div class="hero-strip">
-      <FigurePair ids={['fortis-chassis-built', 'fortis-isaac-viewport']} eager />
     </div>
+  </section>
 
-    <!-- --------------------------------------------------------- projects -->
-    <section class="section" id="projects" aria-labelledby="projects-heading">
-      <div class="section__head">
-        <h2 id="projects-heading">Projects</h2>
-        <span class="section__note">{projects.length} entries, deepest first</span>
+  <div class="wrap cols">
+    <!-- left column -->
+    <aside class="side">
+      {
+        owner.photo && (
+          <div class="photo">
+            <img src={`${base}/${owner.photo}`} alt={`Photo of ${owner.name}`} width="300" height="300" />
+          </div>
+        )
+      }
+      <div class="namecard">
+        <h1>{owner.name}</h1>
+        <p class="role">{siteMeta.role}</p>
+        <hr />
+        <a class="btn btn-solid" href={`mailto:${owner.email}`}>+ Contact</a>
       </div>
 
-      {projects.map((entry, i) => <ProjectEntry entry={entry} index={i} />)}
-
-      <div style="margin-top:2.5rem">
-        <DataTable
-          caption="Other repositories at github.com/nthankas"
-          columns={[
-            { head: 'Repository' },
-            { head: 'What it does' },
-            { head: 'Language' },
-          ]}
-          rows={repoIndex.map((r) => [r.name, r.summary, r.language])}
-        />
-      </div>
-    </section>
-
-    <!-- ------------------------------------------------------- experience -->
-    <section class="section" id="experience" aria-labelledby="experience-heading">
-      <div class="section__head">
-        <h2 id="experience-heading">Experience</h2>
+      <div class="box">
+        <div class="box-title">Working on currently</div>
+        <div class="box-body">
+          <p><strong>{now.org}</strong><br />{now.title}, {now.dates}</p>
+          <ul>
+            {now.stack.map((s) => <li>{s}</li>)}
+          </ul>
+        </div>
       </div>
 
-      <ul class="rows">
+      <div class="box">
+        <div class="box-title">Education</div>
+        <div class="box-body">
+          <dl class="kv">
+            {
+              education.map((e) => (
+                <>
+                  <dt>{e.org}</dt>
+                  <dd>
+                    {e.degree}
+                    <br />
+                    {e.detail}
+                    <br />
+                    <span style="color:var(--ink-muted)">{e.dates}</span>
+                  </dd>
+                </>
+              ))
+            }
+          </dl>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">Links</div>
+        <div class="box-body">
+          <ul class="plain">
+            <li><a href={owner.githubUrl} rel="noopener">GitHub</a></li>
+            <li><a href={owner.linkedinUrl} rel="noopener">LinkedIn</a></li>
+            <li><a href={`mailto:${owner.email}`}>Email</a></li>
+            <li><a href={resumeHref}>Resume</a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- right column -->
+    <div class="main">
+      <section class="box" id="projects" aria-labelledby="projects-heading">
+        <h2 class="box-title" id="projects-heading">Projects</h2>
+        {projects.map((entry) => <ProjectEntry entry={entry} />)}
+        <div class="box-body" style="border-top:1px solid var(--rule)">
+          <div class="table-wrap" style="margin:0">
+            <table>
+              <caption>Other repositories at github.com/{owner.github}</caption>
+              <thead>
+                <tr><th>Repository</th><th>What it does</th><th>Language</th></tr>
+              </thead>
+              <tbody>
+                {
+                  repoIndex.map((r) => (
+                    <tr>
+                      <td><a href={r.url} rel="noopener">{r.name}</a></td>
+                      <td>{r.summary}</td>
+                      <td>{r.language}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="box" id="experience" aria-labelledby="experience-heading">
+        <h2 class="box-title" id="experience-heading">Experience</h2>
         {
           experience.map((role) => (
-            <li>
-              <div class="split">
-                <div>
-                  <p class="row__org">{role.org}</p>
-                  <p class="row__title">{role.title}</p>
-                  <p>{role.body}</p>
-                </div>
-                <dl class="meta">
-                  <div>
-                    <dt>Dates</dt>
-                    <dd>{role.dates}</dd>
-                  </div>
-                  <div>
-                    <dt>Location</dt>
-                    <dd>{role.location}</dd>
-                  </div>
-                  <div>
-                    <dt>Domains</dt>
-                    <dd>{role.stack.join(', ')}</dd>
-                  </div>
-                </dl>
+            <div class="job">
+              <div class="head">
+                <span class="org">{role.org}</span>
+                <span class="when">{role.dates}, {role.location}</span>
               </div>
-            </li>
+              <div class="title">{role.title}</div>
+              <p>{role.body}</p>
+              <ul class="chips">
+                {role.stack.map((s) => <li>{s}</li>)}
+              </ul>
+            </div>
           ))
         }
-      </ul>
+      </section>
 
-      <div style="margin-top:2.25rem">
-        <DataTable
-          caption="Education"
-          columns={[{ head: 'Degree' }, { head: 'Detail' }, { head: 'Institution' }, { head: 'Dates' }]}
-          rows={education.map((e) => [e.degree, e.detail, e.org, e.dates])}
-        />
-      </div>
-    </section>
-
-    <!-- ---------------------------------------------------------- contact -->
-    <section class="section" id="contact" aria-labelledby="contact-heading">
-      <div class="section__head">
-        <h2 id="contact-heading">Contact</h2>
-      </div>
-      <ul class="contact-list">
-        <li>
-          <span class="label">Email</span>
-          <a href={`mailto:${owner.email}`}>{owner.email}</a>
-        </li>
-        <li>
-          <span class="label">GitHub</span>
-          <a href={owner.githubUrl} rel="noopener">github.com/{owner.github}</a>
-        </li>
-        <li>
-          <span class="label">LinkedIn</span>
-          <a href={owner.linkedinUrl} rel="noopener">linkedin.com/in/{owner.linkedin}</a>
-        </li>
-        <li>
-          <span class="label">Resume</span>
-          {
-            resume.file ? (
-              <a href={`${base}/${resume.file}`}>{resume.label} (PDF)</a>
-            ) : (
-              <a href={`mailto:${owner.email}?subject=Resume%20request`}>By email</a>
-            )
-          }
-        </li>
-      </ul>
-    </section>
+      <section class="box" id="contact" aria-labelledby="contact-heading">
+        <h2 class="box-title" id="contact-heading">Contact</h2>
+        <div class="box-body">
+          <ul class="plain">
+            <li><span class="label">Email</span><a href={`mailto:${owner.email}`}>{owner.email}</a></li>
+            <li><span class="label">GitHub</span><a href={owner.githubUrl} rel="noopener">github.com/{owner.github}</a></li>
+            <li><span class="label">LinkedIn</span><a href={owner.linkedinUrl} rel="noopener">linkedin.com/in/{owner.linkedin}</a></li>
+            <li><span class="label">Resume</span><a href={resumeHref}>{resume.file ? `${resume.label} (PDF)` : 'By email'}</a></li>
+          </ul>
+        </div>
+      </section>
+    </div>
   </div>
 </Base>

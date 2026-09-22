@@ -33,6 +33,11 @@ export const owner = {
   githubUrl: 'https://github.com/nthankas',
   linkedin: 'nikhil-thankasala',
   linkedinUrl: 'https://www.linkedin.com/in/nikhil-thankasala',
+  /**
+   * Headshot filename under `public/` (e.g. 'me.jpg'). Null until one is
+   * chosen; the photo box above the name card is omitted while it is null.
+   */
+  photo: null as string | null,
 };
 
 /**

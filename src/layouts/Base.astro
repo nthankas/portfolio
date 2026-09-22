@@ -5,9 +5,7 @@ import { owner, siteMeta, deploy, resume } from '../site.config';
 interface Props {
   title: string;
   description: string;
-  /** Path of the generated OG image, relative to the site base. */
   ogImage?: string;
-  /** Rendered into <link rel="canonical">. Defaults to the current URL. */
   canonicalPath?: string;
 }
 
@@ -19,15 +17,18 @@ const withBase = (p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '
 const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site ?? deploy.site);
 const ogUrl = ogImage ? new URL(withBase(ogImage), Astro.site ?? deploy.site) : undefined;
 
-const nav = [
-  { href: '#projects', label: 'projects' },
-  { href: '#experience', label: 'experience' },
-  { href: '#contact', label: 'contact' },
-];
-
-// On case study routes the in-page anchors do not exist, so they point home.
+// On case study pages the section anchors live on the home page.
 const isHome = Astro.url.pathname.replace(/\/$/, '') === base.replace(/\/$/, '');
-const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
+const home = withBase('/');
+const nav = [
+  { href: '#projects', label: 'Projects' },
+  { href: '#experience', label: 'Experience' },
+  { href: '#contact', label: 'Contact' },
+].map((n) => ({ ...n, href: isHome ? n.href : `${home}${n.href}` }));
+
+const resumeHref = resume.file
+  ? withBase(`/${resume.file}`)
+  : `mailto:${owner.email}?subject=Resume%20request`;
 ---
 
 <!doctype html>
@@ -50,7 +51,7 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
     <meta name="twitter:card" content={ogUrl ? 'summary_large_image' : 'summary'} />
 
     <meta name="author" content={owner.name} />
-    <meta name="theme-color" content="#f7f8f9" />
+    <meta name="theme-color" content="#1f3b63" />
     <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
     <link rel="sitemap" href={withBase('/sitemap-index.xml')} />
 
@@ -62,52 +63,24 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
         name: owner.name,
         email: `mailto:${owner.email}`,
         url: canonical.origin + base,
-        jobTitle: 'Robotics software engineer',
+        jobTitle: siteMeta.role,
         sameAs: [owner.githubUrl, owner.linkedinUrl],
         alumniOf: {
           '@type': 'CollegeOrUniversity',
           name: 'University of California, Santa Cruz',
         },
-        knowsAbout: [
-          'Robotics software architecture',
-          'Robot simulation',
-          'Perception and state estimation',
-          'ROS 2',
-          'NVIDIA Isaac Sim',
-          'Embedded systems',
-        ],
       })}
     />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <header class="site-header">
-      <div class="shell site-header__inner">
-        <a class="wordmark" href={withBase('/')} aria-label="Nikhil Thankasala, home">
-          <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
-            <!-- Chamfered chassis outline with the four X-drive wheels at the
-                 45 degree corners. His robot, as a mark. -->
-            <path d="M13 4 H27 L36 13 V27 L27 36 H13 L4 27 V13 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"></path>
-            <line x1="7.5" y1="4.7" x2="4.7" y2="7.5" stroke="currentColor" stroke-width="2.4"></line>
-            <line x1="32.5" y1="4.7" x2="35.3" y2="7.5" stroke="currentColor" stroke-width="2.4"></line>
-            <line x1="4.7" y1="32.5" x2="7.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line>
-            <line x1="35.3" y1="32.5" x2="32.5" y2="35.3" stroke="currentColor" stroke-width="2.4"></line>
-            <text x="20" y="25.5" text-anchor="middle" font-size="13.5" font-weight="700" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" fill="currentColor" stroke="none">NT</text>
-          </svg>
-          <span class="wordmark__name">nikhil thankasala</span>
-        </a>
-        <nav class="site-nav" aria-label="Sections">
-          {nav.map((n) => <a href={navHref(n.href)}>{n.label}</a>)}
-          {
-            /* Until a resume file is chosen, the resume link resolves to email
-               rather than to a stub page. See `resume` in src/site.config.ts. */
-            resume.file ? (
-              <a href={withBase(`/${resume.file}`)}>resume</a>
-            ) : (
-              <a href={`mailto:${owner.email}?subject=Resume%20request`}>resume</a>
-            )
-          }
+    <header class="bar">
+      <div class="wrap">
+        <a class="name" href={home}>nikhil thankasala</a>
+        <nav aria-label="Sections">
+          {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+          <a href={resumeHref}>Resume</a>
         </nav>
       </div>
     </header>
@@ -116,9 +89,9 @@ const navHref = (hash: string) => (isHome ? hash : `${withBase('/')}${hash}`);
       <slot />
     </main>
 
-    <footer class="site-footer">
-      <div class="shell" style="display:flex;flex-wrap:wrap;gap:0.4rem 1.5rem;justify-content:space-between;width:100%;">
-        <span>{owner.name} &middot; {siteMeta.role}</span>
+    <footer class="foot">
+      <div class="wrap">
+        <span>{owner.name}, {siteMeta.role.toLowerCase()}</span>
         <span>{owner.location}</span>
       </div>
     </footer>

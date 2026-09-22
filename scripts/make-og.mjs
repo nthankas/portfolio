@@ -3,7 +3,7 @@
  * Open Graph image generation.
  *
  * Each card is laid out in HTML using the site's own font files, palette and
- * layout register (hairline rules, letterspaced label, monospace title), then
+ * layout register (solid navy title bar, plain system type), then
  * screenshotted with headless Chromium. No template and no external service.
  *
  * Rendering in a browser rather than an SVG rasterizer is deliberate: the
@@ -51,12 +51,12 @@ function page({ kind, title, summary, chips }) {
   return `<!doctype html>
 <html><head><meta charset="utf-8"><style>
   :root {
-    --paper: #f7f8f9;
-    --ink: #14171a;
-    --muted: #464d53;
-    --rule: #d5d9dd;
-    --wash: #eceef0;
-    --accent: #0a4488;
+    --paper: #f3eee4;
+    --ink: #1b1b1b;
+    --muted: #555555;
+    --rule: #cfc7b6;
+    --wash: #ebe5d6;
+    --accent: #1f3b63;
   }
 
   * { box-sizing: border-box; margin: 0; }
@@ -129,7 +129,7 @@ function page({ kind, title, summary, chips }) {
   <p class="summary">${esc(summary)}</p>
   <div class="chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</div>
   <footer>
-    <span class="mark"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M13 4 H27 L36 13 V27 L27 36 H13 L4 27 V13 Z" stroke="#14171a" stroke-width="2"/><line x1="7.5" y1="4.7" x2="4.7" y2="7.5" stroke="#0a4488" stroke-width="2.4"/><line x1="32.5" y1="4.7" x2="35.3" y2="7.5" stroke="#0a4488" stroke-width="2.4"/><line x1="4.7" y1="32.5" x2="7.5" y2="35.3" stroke="#0a4488" stroke-width="2.4"/><line x1="35.3" y1="32.5" x2="32.5" y2="35.3" stroke="#0a4488" stroke-width="2.4"/><text x="20" y="25.5" text-anchor="middle" font-size="13.5" font-weight="700" font-family="Arial" fill="#14171a">NT</text></svg>Nikhil Thankasala</span>
+    <span class="mark">Nikhil Thankasala</span>
     <span class="tag">robotics software<span class="dot">.</span></span>
   </footer>
 </body></html>`;

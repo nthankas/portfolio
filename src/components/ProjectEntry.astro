@@ -1,92 +1,71 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
-import Figure from './Figure.astro';
+import { Image } from 'astro:assets';
+import { getFigure } from '../lib/figures';
 
 interface Props {
   entry: CollectionEntry<'projects'>;
-  index: number;
 }
 
-const { entry, index } = Astro.props;
+const { entry } = Astro.props;
 const { Content } = await render(entry);
 const d = entry.data;
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const num = String(index + 1).padStart(2, '0');
-const headingId = `project-${entry.id}`;
+const lead = d.lead ? getFigure(d.lead) : null;
+const repo = d.artifacts.find((a) => a.label === 'Repository' && a.href);
+const others = d.artifacts.filter((a) => a.href && a !== repo);
 ---
 
-<details class="entry" id={entry.id}>
-  <summary aria-describedby={headingId}>
-    <div class="entry__head">
-      <div>
-        <span class="entry__index">{num}</span>
-        <h3 class="entry__title" id={headingId}>{d.title}</h3>
-        <p class="entry__thesis">{d.thesis}</p>
-        {
-          /* Lead figure: visible while the card is collapsed, so the projects
-             section carries real imagery before anything is expanded. */
-          d.lead && (
-            <div class="entry__lead">
-              <Figure id={d.lead} width={720} />
-            </div>
-          )
-        }
-        <ul class="chips" aria-label={`Stack for ${d.title}`}>
-          {d.stack.map((s) => <li>{s}</li>)}
-        </ul>
-        <span class="entry__toggle"></span>
-      </div>
-      <dl class="meta">
-        <div>
-          <dt>Role</dt>
-          <dd>{d.role}</dd>
-        </div>
-        <div>
-          <dt>Context</dt>
-          <dd>{d.org}</dd>
-        </div>
-        <div>
-          <dt>Dates</dt>
-          <dd>{d.dates}</dd>
-        </div>
-        {
-          d.team && (
-            <div>
-              <dt>Team</dt>
-              <dd>{d.team}</dd>
-            </div>
-          )
-        }
-      </dl>
+<details class="proj" id={entry.id}>
+  <summary>
+    {
+      lead ? (
+        <Image class="thumb" src={lead.src} alt={lead.alt} width={340} densities={[1, 2]} loading="lazy" />
+      ) : (
+        <div class="thumb-empty" aria-hidden="true" />
+      )
+    }
+    <div>
+      <h3>{d.title}</h3>
+      <div><span class="tag">{d.org}</span></div>
+      <p class="blurb">{d.thesis}</p>
+    </div>
+    <div class="links">
+      Click to learn more
+      {d.caseStudy && <a href={`${base}/work/${d.caseStudy}`}>Full write-up</a>}
+      {repo && <a href={repo.href} rel="noopener">GitHub</a>}
     </div>
   </summary>
 
-  <div class="entry__body">
+  <div class="proj-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><th scope="row">Role</th><td>{d.role}</td></tr>
+          <tr><th scope="row">Dates</th><td>{d.dates}</td></tr>
+          {d.team && <tr><th scope="row">Team</th><td>{d.team}</td></tr>}
+          <tr><th scope="row">Stack</th><td>{d.stack.join(', ')}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <Content />
 
-    <h3>Artifacts</h3>
-    <ul class="contact-list">
-      {
-        d.caseStudy && (
-          <li>
-            <span class="label">Case study</span>
-            <a href={`${base}/work/${d.caseStudy}`}>Full write-up</a>
-          </li>
-        )
-      }
-      {
-        d.artifacts
-          .filter((a) => a.href)
-          .map((a) => (
-            <li>
-              <span class="label">{a.label}</span>
-              <a href={a.href} rel="noopener">
-                {a.href.replace(/^https?:\/\//, '')}
-              </a>
-            </li>
-          ))
-      }
-    </ul>
+    {
+      others.length > 0 && (
+        <>
+          <h3>More links</h3>
+          <ul class="plain">
+            {others.map((a) => (
+              <li>
+                <span class="label">{a.label}</span>
+                <a href={a.href} rel="noopener">{a.href!.replace(/^https?:\/\//, '')}</a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
   </div>
 </details>
