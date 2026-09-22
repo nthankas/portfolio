@@ -27,9 +27,8 @@ artifacts:
     href: https://github.com/nthankas/FORTIS/blob/main/sim/analysis/xdrive_analysis.md
   - label: Orbit analysis
     href: https://github.com/nthankas/FORTIS/blob/main/sim/analysis/orbit_analysis.md
-status: needs_confirmation
-openQuestions:
-  - Shareable links for the nine demo videos
+status: confirmed
+openQuestions: []
 description: 'FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I led the software, simulation and vision work: the ROS 2 architecture, the Isaac Sim studies that sized the drivetrain and arm, and the perception and state estimation stack.'
 ---
 
@@ -60,9 +59,18 @@ figures, tables and demo clips for each.
 
 <DataTable {...chassisRequirements} />
 
+### Free-body diagrams were answering the wrong question
+
+The program started with free-body motor sizing around a tank-tread chassis.
+The first physics test I ran in Isaac Sim showed a silicone tread could not hold
+traction on the 45 degree graphite slope: friction, not torque, was the binding
+constraint. From then on nothing was procured until it had been validated
+against the reactor mesh, which I reduced from a 400 GB tile-resolved assembly
+to a hand-authored collision surface after MuJoCo crashed on it.
+
 ### The physics engine cannot model an omni wheel
 
-Isaac Sim has no anisotropic friction, so a wheel that grips along its drive
+PhysX has no anisotropic friction, so a wheel that grips along its drive
 direction and rolls freely across it cannot be declared as a material. I turned
 the property into geometry: each perimeter roller became a chain of five spheres
 on a free axis, so the assembly rolls freely sideways while every sphere grips.
@@ -101,6 +109,17 @@ its continuous rating.
 
 <FigurePair ids={['fortis-mc-sampling', 'fortis-poloidal-map']} />
 
+### Turning a joystick into an orbit on a floor that slips
+
+The X-drive inverse kinematics scale an over-limit twist uniformly so the
+commanded direction survives, and a regression test pins the kinematics
+constants to the robot description. A heading hold runs a PID on the
+gyroscope-owned yaw estimate so it never chases wheel slip, and an orbit
+generator turns a held button into a constant body twist with yaw rate equal to
+speed over radius, so the cameras keep facing the center column.
+
+<Clip id="controlDemo" />
+
 ### Motion must never happen outside a permitted mission phase
 
 A table-driven mission state machine with nine states and fifteen events
@@ -123,6 +142,14 @@ byte-identical environment.
 
 <DataTable {...architecture} />
 
+### Cameras that could not stream where the code was written
+
+The depth cameras cannot stream inside the dev container, so I built a synthetic
+camera rig that publishes the exact topic contract of the hardware for up to four
+mounts, over a procedural raycast scene with trackable texture and closed-form
+trajectories that give exact ground truth. Two scene variants differ by one added
+and one removed box of known volume, so the map-diff tests assert exact numbers.
+
 ### Noticing what changed inside the vessel between runs
 
 Four chassis depth cameras and one arm camera back-project into point clouds,
@@ -131,11 +158,13 @@ voxel map. A map saved on one run is the reference for the next, and the diff is
 published as a machine-readable summary. That diff is the product. Visual
 odometry off the front camera is keyframe-anchored so matching noise does not
 compound frame to frame, and YOLOv8 detection runs through ONNX on the same
-streams. Because the cameras cannot stream inside the container, a synthetic
-camera rig publishes the exact topic contract of the hardware, so the perception
-tests run for anyone on the team without the robot.
+streams, degrading to empty detections rather than crashing when no weights are
+on disk. An operator's click in the 3D panel becomes the mission target pose and
+the state machine event that moves orbit into targeting.
 
 <FortisPerceptionDiagram />
+
+<Clip id="visionDemo" />
 
 ### Wheel slip poisons the heading estimate
 
@@ -150,13 +179,15 @@ measurement.
 
 ### What ran on hardware
 
-Holonomic drive under operator command with closed-loop wheel velocity and a
-toroidal orbit proved. Visual odometry across four simultaneous camera streams.
-Commanded arm motion through the reach envelope with object pick and stow, and
-the 3 lb payload retained through the stow motion.
+On the sponsor's mockup of the port, tunnel and step: the full tunnel traversed
+with a quarter inch of side clearance, a toroidal strafe across the step above
+0.1 m/s with zero tipping events, 32.7 inches of arm reach, three of three
+pick-and-stow cycles with the 3 lb payload retained, and a 1.58 s E-stop.
 
 <Clip id="toroidal" />
 
 <Clip id="pickStow" />
+
+<Clip id="demoPlaylist" />
 
 <Figure id="fortis-chassis-built" />

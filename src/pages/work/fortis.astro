@@ -23,7 +23,7 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
 <CaseStudy
   entry={entry}
-  standfirst="A tethered inspection robot for the inside of a fusion reactor. I owned the software stack, the simulation program and the perception and state estimation for it, and this page is organized around the problems that had to be solved to make it move, see and stay upright."
+  standfirst="A tethered inspection robot for the inside of a fusion reactor. I owned the software stack, the simulation program and the perception and state estimation for it. This page is organized around the problems that had to be solved to make it move, see and stay upright, and what I built for each."
 >
   <h2>The problem</h2>
 
@@ -32,19 +32,22 @@ if (!entry) throw new Error('Missing project entry: fortis');
     vessel interior is manual work in a confined, delicate space, and the
     sponsor wanted a tethered robot that could enter, orbit toroidally along
     the floor, and carry an arm for camera inspection and thermocouple
-    placement on plasma-facing components.
+    placement on plasma-facing components. All compute, image processing and
+    motion planning had to run on the robot, and all power and communication
+    had to come down a single tether.
   </p>
 
   <Figure id="fortis-tokamak-context" eager />
 
   <p>
     The vessel sets the rules. The only way in is the R0 port and a narrow
-    entrance tunnel. Inside is a graphite-walled interior with a low-friction
-    floor and a 4.5 inch step between the diverter and floor planes. Nothing may
-    be modified or contacted, which rules out rails, fixtures and magnets. Every
-    external dimension of the robot was fixed before the team drew anything, and
-    there was no budget for physical prototypes, so every sizing decision had to
-    be made in simulation and be right the first time.
+    entrance tunnel. Inside is a graphite-tiled interior with a low and
+    uncertain coefficient of friction and a 4.5 inch step between the
+    diverter and floor planes. Nothing may be modified or contacted, which
+    rules out rails, fixtures and magnets. Every external dimension of the
+    robot was fixed before the team drew anything, and there was no budget
+    for physical prototypes, so every sizing decision had to be made in
+    simulation and be right the first time.
   </p>
 
   <DataTable {...chassisRequirements} />
@@ -58,23 +61,85 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <h2>What I owned</h2>
 
   <p>
-    I was the technical lead on a five-person capstone team. The entire software
-    stack, all of the simulation work, the perception and state estimation
-    stack, the drivetrain and arm sizing studies, the system design of the
-    chassis and arm, the containerized development environment and the Jetson
-    Orin bring-up were mine, along with the technical direction and the sprint
-    reviews that gated design decisions. Teammates carried fabrication and
-    assembly, the power distribution system and a share of the CAD drafting
-    under my direction. The hardware demonstrations at the bottom were run by
-    the whole team.
+    I was the simulation and software lead on a five-person capstone team and
+    the technical lead overall. Mine were the Isaac Sim environment and every
+    study run in it, the ROS 2 workspace and its development infrastructure,
+    the drive control and kinematics software, the mission state machine, the
+    perception and state estimation stack, the compute, sensing and
+    communications architecture, and the Jetson Orin bring-up. I also
+    translated simulation results into requirements for the mechanical and
+    CAD work and ran the sprint reviews that gated design decisions.
+  </p>
+
+  <p>
+    The chassis and arm mechanical design and fabrication, the power system,
+    and the arm motion firmware on the Teensy were owned by teammates. Where
+    those appear below it is because a simulation result of mine changed them,
+    or because my code sits on the other end of their interface.
+  </p>
+
+  <h2>Problem: free-body diagrams were answering the wrong question</h2>
+
+  <p>
+    The program started the way most motor-sizing exercises do, with free-body
+    analysis around a tank-tread chassis. The first physics test I ran in
+    Isaac Sim invalidated it: a silicone tread on the 45 degree graphite slope
+    could not hold traction, because the silicone-on-graphite friction
+    coefficient is too low to resist sliding at that grade. Friction, not
+    torque, was the binding constraint, and a free-body diagram that assumed
+    adequate traction had been solving a different problem.
+  </p>
+
+  <p>
+    From that point the methodology was simulation-first. No drivetrain,
+    motor or arm geometry was procured until it had been validated against
+    the reactor mesh. The cost was eight weeks of tread-based design
+    discarded; the benefit was that the discard happened in simulation and
+    not after a purchase. The same test fixed the operating envelope: the 45
+    degree slope was declared untraversable by any wheeled or tracked
+    drivetrain, so the robot operates on the two lower floors and descends on
+    a cable.
+  </p>
+
+  <Figure id="fortis-validation-loop" />
+
+  <h2>Problem: a reactor model no physics engine could collide against</h2>
+
+  <p>
+    The sponsor's DIII-D model arrived as a tile-resolved SolidWorks assembly
+    on the order of 400 GB, with per-graphite-tile geometry far beyond what
+    any real-time physics engine can handle. I built a pipeline to turn it
+    into a simulatable collision surface: a smoothed STEP export replaced the
+    tile-resolved interior with continuous surfaces, manual cleanup removed
+    the upper vessel half and the outer vacuum shell that the robot never
+    touches, the 45 degree slope became a parametric ramp for solver
+    stability, and the open edges and thin-wall artifacts at the step were
+    closed because they produced collision glitches. Collision was then
+    authored by hand in the Isaac Sim GUI. The result is committed to the
+    repository as a hand-finished artifact that is never regenerated.
+  </p>
+
+  <p>
+    MuJoCo was the first simulator and could not process the mesh even after
+    reduction; its collision system crashed during contact resolution on the
+    dense geometry. I moved the program to Isaac Sim on PhysX 5, which held up
+    on the cleaned mesh and matched the intended simulation-to-real path
+    through Isaac ROS. Three engine constraints then shaped everything after:
+    the Isaac Sim world cannot be torn down and recreated in one process, so
+    every parametric sweep runs as a subprocess per test point with results
+    aggregated outside; triangle-mesh collision is static-only, so every
+    dynamic body uses signed-distance-field or convex collision; and the CAD
+    could not be imported for physics because gearbox internals form closed
+    kinematic loops the articulation solver rejects, so dynamic bodies were
+    rebuilt from primitives.
   </p>
 
   <h2>Problem: the physics engine cannot model an omni wheel</h2>
 
   <p>
     Everything downstream depended on simulating a holonomic drive on a
-    low-friction floor, and Isaac Sim has no anisotropic friction. An omni
-    wheel grips along its drive direction and rolls freely across it on passive
+    low-friction floor, and PhysX has no anisotropic friction. An omni wheel
+    grips along its drive direction and rolls freely across it on passive
     rollers, and there is no way to declare a contact material that behaves
     differently along two axes. A low-friction cylinder has no traction to
     drive on, a high-friction cylinder cannot strafe, and anything in between
@@ -82,20 +147,21 @@ if (!entry) throw new Error('Missing project entry: fortis');
   </p>
 
   <p>
-    I turned the material property into geometry: each perimeter roller became
-    a chain of five spheres, and the whole wheel a hub carrying rings of those
-    chains. Sphere contacts grip in every direction individually, but the chain
-    is free to spin about the roller axis, so the assembly as a whole rolls
-    freely across the drive direction. That is the anisotropy the material
-    system could not express.
+    I turned the material property into geometry: each wheel is a hub plus a
+    chain of discrete spheres standing in for the free rollers, with
+    deliberate gaps between the spheres. The gaps are essential. A continuous
+    ring of spheres collides isotropically and degenerates into a plain
+    cylinder, erasing the roll-perpendicular freedom that defines an omni
+    wheel. The production sweeps use a five-sphere chain per roller.
   </p>
 
   <p>
-    The substitution has a known bias, and characterizing it mattered more than
-    hiding it. Sphere chains generate more resistance than real free-spinning
-    rollers, roughly 20 percent more torque on matched runs, so every motor
-    margin the simulation reported is conservative by construction. A model
-    biased the other way would have been useless for sizing motors.
+    The substitution has a known bias, and characterizing it mattered more
+    than hiding it. Real rollers spin freely, so the sphere stand-ins
+    overestimate the torque the motor must supply, roughly 20 percent on
+    matched runs. Every motor margin the simulation reported is therefore
+    conservative by construction. A model biased the other way would have
+    been useless for sizing motors.
   </p>
 
   <Figure id="fortis-isaac-viewport" />
@@ -103,11 +169,12 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <h2>Problem: the team's skid-steer chassis could not cross the step</h2>
 
   <p>
-    The team started on skid-steer because it is the cheapest thing to build.
-    To orbit the vessel from its landing orientation, a skid-steer robot has to
-    perform a 90 degree point turn while straddling the step. I simulated that
-    turn across 60 geometrically valid configurations, sweeping wheel radius,
-    wheel width, wheelbase, track width and motor torque.
+    After treads, the team moved to skid-steer because it is the cheapest
+    thing to build. To orbit the vessel from its landing orientation, a
+    skid-steer robot has to perform a 90 degree point turn while straddling
+    the step. I simulated that turn across 60 geometrically valid
+    configurations, sweeping wheel radius, wheel width, wheelbase, track width
+    and motor torque.
   </p>
 
   <DataTable {...skidSteer} />
@@ -118,9 +185,10 @@ if (!entry) throw new Error('Missing project entry: fortis');
     components that is a failure regardless of whether the yaw target was met.
     The cause is geometric, not a tuning problem: during a point turn every
     wheel arc crosses the step circle, so the wheels must climb a wall nearly
-    equal to their own radius, and no wheelbase or track width in the buildable
-    range avoids it. The study also used a friction coefficient more generous
-    than the measured graphite floor.
+    equal to their own radius, and no wheelbase or track width in the
+    buildable range avoids it. On the flat graphite floor the differential
+    wheel speed could not even generate the contact-patch shear needed to
+    turn; the chassis drove straight and would not rotate.
   </p>
 
   <p>
@@ -128,9 +196,11 @@ if (!entry) throw new Error('Missing project entry: fortis');
     omni wheels in a chamfered square chassis. An X-drive strafes directly
     along the toroidal orbit with no yaw required to translate, so the wheels
     never cross the step at all; the robot straddles it for the whole orbit.
-    X-drive beat mecanum on mechanical grounds: 90 degree rollers are simpler
-    than 45 degree ones, 8 inch omni wheels were available off the shelf, and
-    45 degree corner mounting falls naturally out of the chamfered chassis.
+    Mecanum lost on a Pugh matrix: its 45 degree rollers give the least force
+    authority on the lateral axis, and the robot's primary motion inside the
+    torus is exactly that axis. X-drive gives equal authority in every
+    direction from symmetry, free-rolls perpendicular to the drive axis during
+    the winch descent, and needs four motors and no steering actuators.
   </p>
 
   <Figure id="fortis-endoskeleton-cad" />
@@ -139,8 +209,13 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     With the wheel model in place I ran one full orbit at each commanded speed
-    from 0.10 to 0.30 m/s, at the mission radius, straddling the step, with the
-    arm stowed, and logged per-wheel torque.
+    from 0.10 to 0.30 m/s, at the mission radius, straddling the step, with
+    the arm stowed, and logged per-wheel torque. The wheel velocities come
+    from a single inverse kinematics call after a settle and are never
+    corrected, so the chassis drifts radially and tracking sits at 18 to 24
+    percent by design. That is intentional: an open-loop command yields an
+    honest torque measurement, where a closed-loop tracker fighting position
+    error would inflate the reading.
   </p>
 
   <DataTable {...orbitConditions} />
@@ -148,21 +223,25 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <DataTable {...orbitResults} />
 
   <p>
-    Worst-wheel 95th-percentile torque reaches 4.10 Nm at 0.30 m/s against 4.98
-    Nm of continuous motor capability at 60 A, so the drive stays inside
-    continuous rating across the whole speed range with the conservative wheel
-    model. Peak excursions of 10 to 11 Nm are short roller-contact spikes well
-    inside transient capability.
+    Mapped through the drive motor's torque constant, the thresholds are 3.32
+    Nm at the 40 A continuous firmware clip, 4.98 Nm at 60 A and 5.81 Nm at
+    70 A. Worst-wheel 95th-percentile torque reaches 4.10 Nm at 0.30 m/s, so
+    the drive stays inside the 60 A continuous rating across the whole speed
+    range with the conservative wheel model. Peak excursions of 10 to 11 Nm
+    are short roller-contact spikes well inside transient capability.
   </p>
 
   <Figure id="fortis-orbit-torque" />
 
   <p>
     The front-left wheel trends higher than the other three throughout the
-    sweep because the arm center of gravity sits forward of chassis center. The
-    orbit runs in a fixed direction, so the load biases onto the front pair and
-    stays there. That asymmetry is why the margin is quoted against the worst
-    wheel rather than the mean.
+    sweep because the arm center of gravity sits forward of chassis center.
+    The orbit runs in a fixed direction, so the load biases onto the front
+    pair and stays there. That asymmetry is why the margin is quoted against
+    the worst wheel rather than the mean. This result drove the change from
+    geared 12 V motors to direct-drive outrunners on ODrive S1 controllers at
+    48 V straight off the tether bus, which took drive current off the 12 V
+    rail entirely and removed the gearbox as a failure point.
   </p>
 
   <Clip id="orbitSim" />
@@ -180,11 +259,12 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     I wrote a constraint-aware Monte Carlo: 5,000 poses drawn uniformly across
-    the four joints, with the 3 lb payload applied in every sample to hold the
-    worst case, then filtered for chassis, self and floor collision and for the
-    reactor envelope. Before trusting any of it I verified the sampler was
-    uniform across each joint range, because pass rates over a biased draw are
-    not pass rates.
+    the four joints at a fixed seed, with the 3 lb payload applied in every
+    sample to hold the worst case, then filtered for chassis, self and floor
+    collision and for the reactor envelope. Before trusting any of it I
+    verified the sampler was uniform across each joint range, because pass
+    rates over a biased draw are not pass rates. The sweep runs headless in
+    under twelve minutes.
   </p>
 
   <DataTable {...armResults} />
@@ -193,14 +273,14 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     Each surviving pose was checked for stability by projecting the total
-    center of gravity against the chassis support polygon, with the physics run
-    at the lightest plausible chassis mass in the design range rather than the
-    expected one, since a lighter chassis tips more easily under arm
+    center of gravity against the chassis support polygon, with the physics
+    run at the lightest plausible chassis mass in the design range rather
+    than the expected one, since a lighter chassis tips more easily under arm
     cantilever. Any pose that survives at the light mass is safe at the real
     one. The filtered set then became the shared input for both the joint
-    torque analysis and the chassis stability analysis, so actuator sizing and
-    tip-over margin were computed against the same population of poses instead
-    of two different robots.
+    torque analysis and the chassis stability analysis, so actuator sizing
+    and tip-over margin were computed against the same population of poses
+    instead of two different robots.
   </p>
 
   <Figure id="fortis-poloidal-map" />
@@ -208,12 +288,12 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <DataTable {...actuators} />
 
   <p>
-    Every joint peaks below 60 percent of its continuous rating. The shoulder is
-    the loaded joint at 17.62 Nm peak against a 30 Nm rating, roughly 1.7 times
-    margin at the single worst pose in the reachable set. No pose in the set is
-    analytically unstable; 25 tipped in physics under the deliberately light
-    chassis mass, all inside the support polygon analytically, which is dynamic
-    rocking on the step rather than a static failure.
+    Every joint peaks below 60 percent of its continuous rating. The shoulder
+    is the loaded joint at 17.62 Nm peak against a 30 Nm rating, roughly 1.7
+    times margin at the single worst pose in the reachable set. No pose in the
+    set is analytically unstable; 25 tipped in physics under the deliberately
+    light chassis mass, all inside the support polygon analytically, which is
+    dynamic rocking on the step rather than a static failure.
   </p>
 
   <Figure id="fortis-arm-torque" />
@@ -221,14 +301,15 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <Clip id="armSim" />
 
   <p>
-    The same loop settled the arm geometry. A 50 inch arm covered more vessel
-    per chassis position but needed actuators that broke the mass and cost
-    budget and raised the tipping problem for the chassis carrying them. At 30
-    inches the demand stayed inside the torque range of affordable steppers.
-    Moving the links from aluminum to carbon fiber tube cut link mass and let
-    the wiring route internally, and three nesting links fold to a 16.877 by
-    2.744 inch stow profile, which is what lets a 30 inch arm enter through an
-    opening shorter than itself.
+    The same sweep settled the arm geometry. The sponsor's original 50 inch
+    reach put the shoulder's 95th-percentile demand past the output of any
+    cycloidal gearbox the project could source, and scaling the actuator up
+    would have cascaded mass into every upstream link and into the chassis
+    tipping problem. At 30 inches every joint came inside margin. Moving the
+    links from aluminum to carbon fiber tube cut link mass and let the wiring
+    route internally, and three nesting links fold to a 16.877 by 2.744 inch
+    stow profile, which is what lets a 30 inch arm enter through an opening
+    shorter than itself.
   </p>
 
   <Figure id="fortis-arm-stow" />
@@ -239,56 +320,88 @@ if (!entry) throw new Error('Missing project entry: fortis');
     Inside a vessel that must not be touched, an arm or drive command arriving
     at the wrong moment is the worst failure available. I built the stack so
     that motion is state-gated. A mission state machine holds nine states and
-    fifteen events, with transitions and their guards expressed as a data table
-    rather than nested conditionals. It is pure logic with no middleware or
-    hardware dependencies, which is what let the transition table be exercised
-    exhaustively before any of it ran on a robot.
+    fifteen events, with transitions and their guards expressed as a data
+    table rather than nested conditionals. It is pure Python with no ROS or
+    hardware dependencies, which is what let the transition table be
+    exercised exhaustively before any of it ran on a robot. A thin node wraps
+    it and publishes the current state latched, and a terminal console drives
+    it by hand during bring-up.
   </p>
 
   <Figure id="fortis-software-layers" />
 
   <p>
-    Every action component sits above the state machine rather than beside it.
-    The drive component rejects any motion command issued outside a permitted
-    phase and emits an explicit stop on rejection rather than silently dropping
-    the command, so a rejected command is observable. The arm component was
-    scaffolded against the same contract before its kinematics existed, which is
-    why inverse kinematics and the motion action dropped in later without
-    renegotiating the interface.
+    Every action component sits above the state machine rather than beside
+    it. The drive accepts velocity commands only in the orbit and return-home
+    states. Anything else, including the window before any state has been
+    received, is rejected, and a rejected command publishes explicit zeros
+    rather than silence, so a stop is never inferred from the absence of a
+    message. Two more mechanisms stop the wheels independently of the teleop
+    client: entering any non-driving state commands zeros immediately, and a
+    dead-man watchdog commands zeros if no velocity command arrives within
+    half a second, because teleop clients stop publishing on release without
+    sending a zero and the velocity controller would otherwise latch its last
+    setpoint. The arm component was built against the same contract before
+    its kinematics existed, which is why inverse kinematics and the motion
+    action dropped in later without renegotiating the interface.
   </p>
 
   <p>
-    Two properties matter more than the state count. Any state can transition to
-    the fault state through an unguarded wildcard, which is what lets the drive
-    health monitor latch a fault from anywhere in the mission. And leaving the
-    fault state requires an explicit operator acknowledgement, so recovery is
-    never automatic: a drive that comes back healthy on its own does not clear
-    the fault, because the condition that caused it has not been inspected.
+    Any state can transition to the fault state through an unguarded
+    wildcard. A drive health monitor watches all four motor controllers and
+    latches a fault on the edge where any axis reports an error, which drives
+    the mission into fault from anywhere. Leaving fault requires an explicit
+    operator acknowledgement, so recovery is never automatic: a drive that
+    comes back healthy on its own does not clear the fault, because the
+    condition that caused it has not been inspected.
   </p>
 
   <Figure id="fortis-mission-states" />
 
-  <h2>Problem: the simulation model and the robot code drifting apart</h2>
+  <h2>Problem: turning a joystick into an orbit on a floor that slips</h2>
 
   <p>
-    Operator teleoperation publishes a body velocity command. An X-drive
-    kinematics component maps it to four wheel velocity setpoints, and those go
-    out over a daisy-chained CAN bus to four controllers running onboard
-    velocity control. The kinematics geometry constants are pinned to the robot
+    Operator teleoperation publishes a body velocity. The X-drive inverse
+    kinematics are a 4 by 3 matrix from chassis velocity to four wheel speeds,
+    implemented with uniform wheel-speed normalization: a commanded twist that
+    would exceed one wheel's top speed is scaled down as a whole rather than
+    clipped per wheel, which preserves the commanded direction. Forward
+    kinematics recover the chassis twist from wheel feedback by the
+    pseudoinverse of the same matrix. Setpoints go out over a daisy-chained
+    CAN bus to four controllers that close their own velocity loops at the
+    commutation layer. The kinematics constants are pinned to the robot
     description by a regression test that fails the moment either side moves,
     so the model the simulation sized against and the code the robot runs
     cannot diverge quietly.
   </p>
 
+  <p>
+    Two helpers sit on top of that path. A heading hold arbitrates the
+    operator's yaw command against a PID on the estimated yaw: while the
+    operator is turning, their command passes through verbatim and the target
+    tracks the live heading, and on release the controller holds the heading
+    they stopped at. It works because the estimated yaw is gyroscope-owned,
+    so the hold does not chase wheel slip. An orbit generator turns a held
+    button into a constant body twist of tangential strafe plus coupled yaw,
+    with yaw rate equal to speed over radius, so the cameras keep facing the
+    center column. For a holonomic base a face-center orbit is a constant
+    twist, so no planner or localization is needed, and it runs with its own
+    shorter dead-man so release-to-stop is crisp.
+  </p>
+
   <Figure id="fortis-block-diagram" />
 
+  <Clip id="controlDemo" />
+
   <p>
-    Coordinated multi-axis stepping for the arm runs on a dedicated
-    microcontroller rather than the Jetson, because a step pulse delayed by the
-    operating system scheduler is a lost position on a geared stepper, not a
-    late one. The host owns the analytic inverse kinematics and the motion
-    action interface, the microcontroller owns step timing, and the two meet at
-    a serial contract with heartbeat and status reporting.
+    On the arm side, coordinated multi-axis stepping runs on a dedicated
+    microcontroller rather than the Jetson, because a step pulse delayed by
+    the operating system scheduler is a lost position on a geared stepper,
+    not a late one. The host owns the analytic inverse kinematics, the motion
+    action interface and the serial bridge; the microcontroller owns step
+    timing and the arm's safety state, and the two meet at a CRC-checked
+    binary serial contract with a heartbeat. The firmware itself was the
+    embedded lead's; the Jetson side of that link is mine.
   </p>
 
   <Figure id="fortis-arm-subsystem" />
@@ -296,15 +409,50 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <h2>Problem: five engineers, five machines, one term</h2>
 
   <p>
-    The stack is a containerized ROS 2 Humble environment bundling the
-    middleware, motion planning, the controller framework and a visualization
-    bridge, so every team member ran a byte-identical stack regardless of
-    machine. Environment drift stopped being a category of problem. Continuous
+    Every team member needed the same software target and the on-robot stack
+    had to deploy to the Jetson, so the software effort began with
+    infrastructure rather than nodes. The stack is a containerized ROS 2
+    Humble environment bundling the middleware, motion planning, the
+    controller framework, the localization filter and a visualization bridge,
+    so every team member ran a byte-identical stack regardless of machine and
+    environment drift stopped being a category of problem. Continuous
     integration builds and tests the workspace on every change, and linting
     runs both on commit and in the pipeline.
   </p>
 
+  <p>
+    The compute architecture went through two earlier designs before this
+    one. A microcontroller-only stack was abandoned when the scope grew to
+    need a full middleware, the simulation-to-real pose pipeline and five
+    concurrent camera streams. A Raspberry Pi 4 was rejected because its four
+    USB ports share one internal hub, so simultaneous camera streams contend
+    for bandwidth, and it has no GPU path. The Jetson Orin Nano Super gives
+    independent USB 3 bandwidth for the cameras, GPU compute for on-robot
+    vision and a native Isaac ROS path. The sensor design was cut the same
+    way: dead-wheel encoders, a standalone IMU and a six-sensor time-of-flight
+    array were all replaced by five depth cameras with integrated inertial
+    sensors, which lost no pose-feedback capability.
+  </p>
+
   <DataTable {...architecture} />
+
+  <h2>Problem: cameras that could not stream where the code was written</h2>
+
+  <p>
+    The depth cameras cannot stream inside the development container, so the
+    perception stack would have been untestable anywhere but on the robot. I
+    built a synthetic camera rig that publishes the exact topic contract of
+    the real hardware, including aligned depth and inertial data for one to
+    four mounts at the URDF poses. Behind it is a procedural scene of planes,
+    boxes and spheres rendered by a vectorized raycaster, with checkerboard
+    and speckle texture on every surface so the feature tracker has something
+    to track, and closed-form trajectories that give exact ground truth for
+    error bounds. Two scene variants differ by exactly one added and one
+    removed box of known volume, so the map-diff tests can assert exact
+    numbers. The whole perception chain is developed and tested against this
+    and then verified live on the Jetson, which is what makes the perception
+    tests runnable by anyone on the team without the robot.
+  </p>
 
   <h2>Problem: noticing what changed inside the vessel between runs</h2>
 
@@ -312,34 +460,31 @@ if (!entry) throw new Error('Missing project entry: fortis');
     Five depth cameras feed the stack: four on the chassis faces through a
     powered USB 3 hub with a single uplink to the Jetson, and one on the arm.
     Each camera back-projects its aligned depth into a point cloud in its own
-    optical frame, the clouds are transformed into the body frame and merged on
-    a fixed-rate timer, and the merged cloud integrates into a persistent voxel
-    map. A map saved on one run becomes the reference for the next, and the
-    difference is published both as visual markers and as a machine-readable
-    summary. For an inspection robot, that diff is the product rather than a
-    debugging aid. Object detection runs YOLOv8 through ONNX inference on the
-    same streams.
+    optical frame, a fusion node transforms every cloud into the body frame
+    and merges them on a fixed-rate timer, skipping any camera whose
+    transform is missing rather than stalling the rest, and the merged cloud
+    integrates into a persistent voxel map. A map saved on one run becomes
+    the reference for the next, and the difference is published both as
+    visual markers and as a machine-readable summary. For an inspection
+    robot, that diff is the product rather than a debugging aid.
   </p>
 
   <p>
-    Visual odometry runs off the front camera and is keyframe-anchored: every
-    frame is matched against the current keyframe rather than the previous
-    frame, so per-frame matching noise does not compound between keyframe
-    refreshes and drift accrues per keyframe instead of per frame. Motion is
-    recovered by lifting matched features through depth and solving for pose
-    with outlier rejection.
+    Detection runs YOLOv8 through ONNX on the front camera at a fixed rate,
+    lifts each box to 3D through the depth median and into the body frame,
+    and nominates the nearest graspable object as the grasp candidate. With
+    no weights on disk it degrades to one warning and empty detections rather
+    than crashing. A target selector turns an operator's click in the 3D
+    panel into the mission target pose, validated against a range annulus,
+    and fires the state machine event that moves orbit into targeting. A
+    system health node grades every stream's rate onto diagnostics, and a
+    missing publisher shows up as a stale entry, never a crash, so it runs on
+    a partially launched stack.
   </p>
 
   <FortisPerceptionDiagram />
 
-  <p>
-    The depth cameras cannot stream inside the development container, so I
-    built a synthetic camera rig that publishes the exact topic contract of the
-    real hardware, including aligned depth and inertial data for one to four
-    mounts. The whole perception chain is developed and tested against it and
-    then verified live on the Jetson, which is what makes the perception tests
-    runnable by anyone on the team without the robot.
-  </p>
+  <Clip id="visionDemo" />
 
   <Clip id="visionUi" />
 
@@ -348,32 +493,56 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <p>
     An Extended Kalman Filter on the Jetson fuses wheel odometry, visual
     odometry and inertial data into one continuous pose estimate. The
-    engineering is in what is deliberately excluded. Wheel odometry contributes
-    translation only, never heading, because the rear wheels slip under load
-    and a slipping wheel injects a phantom yaw rate the gyroscope never sees,
-    which makes wheel-derived heading actively misleading rather than merely
-    noisy. Visual odometry also contributes translation only, because its
-    rotation quality collapses as feature count drops while the gyroscope stays
-    uniform. The gyroscope owns yaw outright.
+    engineering is in what is deliberately excluded. Wheel odometry
+    contributes translation only, never heading, because the rear wheels slip
+    under load and a slipping wheel injects a phantom yaw rate the gyroscope
+    never sees, which makes wheel-derived heading actively misleading rather
+    than merely noisy. Visual odometry also contributes translation only,
+    because its rotation quality collapses as feature count drops while the
+    gyroscope stays uniform. The gyroscope owns yaw outright. Neither
+    translation source is fused as an absolute position either, only as a
+    velocity, because both are open-loop dead reckoning and feeding their
+    position in would inject unbounded drift as though it were a measurement.
   </p>
 
   <p>
-    Neither translation source is fused as an absolute position either, only as
-    a velocity, because both are open-loop dead reckoning with no absolute
-    reference, and feeding their absolute position in would inject unbounded
-    drift as though it were a measurement. The two fail in different ways, one
-    by slip and one by tracking loss, so each is followed according to its own
-    stamped covariance and neither is ever trusted for heading.
+    The gyroscope has a zero-rate bias, and a stationary detector based on
+    measured velocity could never fire, because bias-driven creep keeps the
+    wheels turning while the very drift being cancelled is active. So the
+    bias is estimated only while the drive is disarmed, when the motors are
+    idle and the chassis is still by definition, with a settle window after
+    each disarm because the chassis rocks as the motors release. Wheel
+    odometry reads joint velocities by name rather than array index, because
+    the broadcaster does not guarantee order, and every integrator runs on
+    message stamps rather than wall clock, re-anchoring across gaps instead
+    of teleporting the pose.
+  </p>
+
+  <p>
+    Visual odometry off the front camera is keyframe-anchored: every frame is
+    matched against the current keyframe rather than the previous frame, so
+    matching noise does not compound frame to frame. Motion is recovered by
+    lifting matched features through depth and solving for pose with outlier
+    rejection. On tracking loss it publishes nothing, so the filter coasts on
+    wheels and gyro instead of ingesting garbage, and its covariance scales
+    with the inverse of the inlier count so the filter's trust follows
+    feature support.
   </p>
 
   <h2>What ran on hardware</h2>
 
   <p>
-    Holonomic chassis drive under operator command with closed-loop wheel
-    velocity, and toroidal orbit motion proved on hardware. Visual odometry
-    running across four simultaneous camera streams with inertial data
-    retrieval. Commanded arm motion through the reach envelope with object pick
-    and stow, and the payload retained through the stow motion.
+    The integrated demonstration ran on the sponsor's mockup of the R0 port,
+    the tunnel and the step at the correct radius. The chassis traversed the
+    full tunnel inside the 15.75 inch passage with at least a quarter inch of
+    side clearance and sustained a toroidal strafe across the step above the
+    0.1 m/s target with zero tipping and zero wheel-lift events across the
+    orbit trials. The arm reached 32.7 inches at full extension and completed
+    three of three pick-and-stow cycles with the 3 lb payload retained
+    through stow and return. The operator E-stop halted all motion in 1.58 s.
+    The mockup is plastic rather than graphite, so it confirms geometric fit
+    and end-to-end motion control; the low-friction margin remains
+    established by the simulation.
   </p>
 
   <Clip id="toroidal" />
@@ -381,17 +550,10 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <Clip id="portEntry" />
   <Clip id="pickStow" />
   <Clip id="payloadHold" />
+  <Clip id="eStop" />
+  <Clip id="demoPlaylist" />
 
   <h2>The build</h2>
-
-  <p>
-    The design loop that produced all of the above: CAD geometry with real
-    masses and materials went into the simulation, out came torque, speed and
-    stability sweeps, and a sprint review gated on whether the criteria were
-    met. Geometry did not advance until numbers existed for it.
-  </p>
-
-  <Figure id="fortis-validation-loop" />
 
   <Figure id="fortis-internal-layout" />
   <Figure id="fortis-wiring-asbuilt" />

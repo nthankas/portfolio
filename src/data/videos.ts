@@ -1,17 +1,11 @@
 /**
  * FORTIS demo clips.
  *
- * All nine clips live in the owner's Google Drive Design Defense folder. Eight
- * are placed here; `E-Stop.mp4` is deliberately absent because safety hardware
- * is out of scope for this site.
- *
- * Each entry carries the clip's Drive file id, pulled live from the folder this
- * session. The player embeds Drive's preview iframe, lazy-loaded, so the clips
- * cost nothing at page load and nothing has to be re-hosted.
- *
- * IMPORTANT: the embeds only play for visitors if each file (or the Design
- * Defense folder) is shared as "anyone with the link can view". Confirm that
- * before launch; see QUESTIONS.md.
+ * Nine clips live in the owner's Google Drive demo folder, shared as anyone
+ * with the link (checked September 2026). Three more are on YouTube. Each
+ * entry carries the Drive file id or the YouTube id; the player embeds the
+ * matching iframe, lazy-loaded, so the clips cost nothing at page load and
+ * nothing has to be re-hosted.
  *
  * To self-host one instead (removes the Drive dependency and the sharing
  * requirement): encode a web-friendly MP4, drop it and a poster frame into
@@ -28,6 +22,10 @@ export interface Video {
   poster: string | null;
   /** Google Drive file id for the embedded player. */
   drive: string | null;
+  /** YouTube video id, used instead of Drive when set. */
+  youtube?: string | null;
+  /** YouTube playlist id. With `youtube` set, the embed opens that video inside the list. */
+  playlist?: string | null;
   /** What the clip shows. Rendered whether or not any player is available. */
   caption: string;
   source: string;
@@ -36,6 +34,46 @@ export interface Video {
 }
 
 export const videos = {
+  controlDemo: {
+    file: null,
+    poster: null,
+    drive: null,
+    youtube: 'oBF4cOx7-Ic',
+    caption:
+      'Control demo: the chassis under operator command through the drive stack, with the mission state gate, the X-drive kinematics and closed-loop wheel velocity in the loop.',
+    source: 'Team demo video, YouTube.',
+    origin: 'youtu.be/oBF4cOx7-Ic',
+  },
+  visionDemo: {
+    file: null,
+    poster: null,
+    drive: null,
+    youtube: 'wVuB0_i8wws',
+    caption:
+      'Vision demo: the perception stack running on the robot, with the camera streams, point clouds and detections in the operator interface.',
+    source: 'Team demo video, YouTube.',
+    origin: 'youtu.be/wVuB0_i8wws',
+  },
+  demoPlaylist: {
+    file: null,
+    poster: null,
+    drive: null,
+    youtube: 'cuDwkSAfIYw',
+    playlist: 'PLJzUDX4y0hPBtgdsXaRwX__4a0BTDvUJF',
+    caption:
+      'The team demo playlist. Use the list control in the player to move between clips.',
+    source: 'Team demo playlist, YouTube.',
+    origin: 'youtube.com/playlist?list=PLJzUDX4y0hPBtgdsXaRwX__4a0BTDvUJF',
+  },
+  eStop: {
+    file: null,
+    poster: null,
+    drive: '17D4q4TgNyVyffA3ENmCJMMkPmypKJAOk',
+    caption:
+      'Hardware emergency stop: the operator-side E-stop cutting all robot motion. Measured at 1.58 s to full stop across three trials, implemented as a hardware interruption of the supply with no software in the loop.',
+    source: 'Hardware demonstration.',
+    origin: 'E-Stop.mp4',
+  },
   orbitSim: {
     file: null,
     poster: null,
