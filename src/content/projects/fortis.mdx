@@ -39,237 +39,124 @@ import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
 import FortisPerceptionDiagram from '../../components/FortisPerceptionDiagram.astro';
 import {
-  capabilityTiers,
   chassisRequirements,
   skidSteer,
-  actuators,
   armResults,
   orbitResults,
   architecture,
 } from '../../data/fortis';
 
-FORTIS is a tethered, holonomic inspection and service robot for the interior of
-General Atomics' DIII-D tokamak. I was the technical lead on a five-person team
-and did the bulk of the engineering myself: the system design of the chassis and
-the arm, the entire software stack, all of the simulation work, perception and
-state estimation, and the containerized development environment. My teammates
-carried the physical assembly, the power system, and a share of the CAD
-drafting, which ran under my direction.
+FORTIS is a tethered, holonomic inspection robot for the interior of General
+Atomics' DIII-D tokamak. I was the technical lead on a five-person team and
+owned the software stack, the simulation program, the perception and state
+estimation, and the sizing of the chassis and arm. Teammates carried fabrication,
+the power system and a share of the CAD under my direction.
 
-<DataTable {...capabilityTiers} />
-
-The constraint that shaped everything is access. The only way into the vessel is
-the R0 port and a narrow entrance tunnel, which open onto a graphite-walled
-interior with a low-friction floor and a step between the diverter and floor
-planes. Nothing inside may be modified or contacted. Every external dimension on
-the robot was fixed by a reactor built decades before anyone considered driving
-a robot through it.
+The vessel sets the rules: a 15.75 inch entry profile, a 4.5 inch step to
+straddle, a low-friction graphite floor, nothing may be touched, and no budget
+for physical prototypes. Each section below is a problem that followed from
+that and what I built to solve it. The full write-up linked above has the
+figures, tables and demo clips for each.
 
 <DataTable {...chassisRequirements} />
 
-<Figure id="fortis-tokamak-context" />
+### The physics engine cannot model an omni wheel
 
-### Simulation
+Isaac Sim has no anisotropic friction, so a wheel that grips along its drive
+direction and rolls freely across it cannot be declared as a material. I turned
+the property into geometry: each perimeter roller became a chain of five spheres
+on a free axis, so the assembly rolls freely sideways while every sphere grips.
+The known bias is about 20 percent extra torque on matched runs, which makes
+every motor margin the simulation reported conservative by construction.
 
-The budget did not allow physical prototypes, so simulation had to close the
-design loop before anything was fabricated. I built the loop around NVIDIA Isaac
-Sim: CAD geometry with real masses and materials went into a simulation model
-with modeled wheels and reactor floor, out came torque, speed and stability
-sweeps, and a sprint review gated on whether the criteria were met. Geometry did
-not advance until numbers existed for it.
+### The skid-steer chassis could not cross the step
 
-<Figure id="fortis-validation-loop" />
+I simulated the 90 degree point turn a skid-steer robot needs over the step
+across 60 configurations. Three completed it, all at 85 to 116 degrees of tilt
+and 7 to 10 inches of radial drift, because every wheel arc crosses the step
+circle mid-turn. That study moved the robot to an X-drive on omni wheels, which
+strafes the toroidal orbit with no yaw and never crosses the step at all.
 
-Two pieces of methodology carried the program.
+<DataTable {...skidSteer} />
 
-The first is how to model an omni wheel at all. An omni wheel works because its
-contact patch has two different personalities: it grips along the drive
-direction and rolls freely across it on passive perimeter rollers. The clean way
-to express that in a simulator is anisotropic friction, a contact material whose
-coefficient depends on direction, and PhysX does not support it. A cylinder with
-low friction has no traction to drive on; a cylinder with high friction cannot
-strafe; splitting the difference produces a wheel that does both badly. So the
-material property had to become geometry: I modeled each perimeter roller as a
-chain of five spheres, and the whole wheel as a hub carrying rings of those
-chains. Sphere contacts grip in every direction individually, but because the
-chain is free to rotate about the roller axis, the assembly as a whole rolls
-freely across the drive direction, which is exactly the anisotropy the material
-system could not express. The cost is a known bias: sphere chains generate more
-resistance than real free-spinning rollers, roughly 20 percent more torque on
-matched runs, so every motor margin the simulation reported is conservative by
-construction. A model biased the other way would have been useless for sizing
-motors.
+### Sizing motors for a floor nobody could test on
 
-The second is constraint-aware sampling. Rather than sampling joint space
-blindly, I drew 5,000 poses uniformly across the four joints with a 3 lb payload
-applied in every sample to hold the worst case, then filtered to the 2,014 poses
-that are physically reachable inside the vessel. Each surviving pose was checked
-for stability by projecting total center of gravity against the chassis support
-polygon. That filtered set became the shared input for both the joint torque
-analysis and the chassis stability analysis, so actuator sizing and tip-over
-margin were computed against exactly the same population of poses rather than
-two different ones.
+One full orbit at each speed from 0.10 to 0.30 m/s, straddling the step, arm
+stowed. Worst-wheel 95th-percentile torque reaches 4.10 Nm against 4.98 Nm of
+continuous capability, with the conservative wheel model in place.
+
+<DataTable {...orbitResults} />
+
+### Sizing arm actuators over a joint space that is mostly invalid
+
+Most of the arm's joint space puts it through the chassis, the floor or the
+vessel wall. I wrote a constraint-aware Monte Carlo: 5,000 poses with the 3 lb
+payload in every sample, filtered to the 2,014 that are physically reachable,
+each checked for tip-over at the lightest plausible chassis mass. The same
+filtered set fed both the joint torque and the chassis stability analyses, so
+the two results describe the same robot. Every joint peaks below 60 percent of
+its continuous rating.
 
 <DataTable {...armResults} />
 
 <FigurePair ids={['fortis-mc-sampling', 'fortis-poloidal-map']} />
 
-<Figure id="fortis-arm-torque" />
+### Motion must never happen outside a permitted mission phase
 
-The orbit sweep sized the drive motors. I ran one full orbit at each commanded
-speed from 0.10 to 0.30 m/s, at a radius of 1.59 m, straddling the step, at
-20.66 kg with the arm stowed. Worst-wheel 95th-percentile torque reaches 4.10 Nm
-at 0.30 m/s against 4.98 Nm of continuous motor capability at 60 A.
-
-<DataTable {...orbitResults} />
-
-<Figure id="fortis-orbit-torque" />
-
-One detail in that plot is worth reading rather than skimming. The front-left
-wheel trends consistently higher than the other three because the arm center of
-gravity sits forward of chassis center. The asymmetry is expected and bounded:
-the orbit runs in a fixed direction, so the load biases onto the front pair and
-stays there.
-
-<Figure id="fortis-isaac-viewport" />
-
-<Clip id="orbitSim" />
-
-### Software architecture
-
-I built the stack as a containerized ROS 2 Humble environment bundling the
-middleware, motion planning, the controller framework and a visualization
-bridge, so every team member ran a byte-identical stack. That removed
-environment drift as a category of problem across five people on different
-machines. Continuous integration builds and tests the workspace on every change.
-
-<DataTable {...architecture} />
-
-The organizing property is that motion is state-gated. A table-driven mission
-state machine holds nine states and fifteen events, with transitions and their
-guards expressed as data rather than nested conditionals. It is pure logic with
-no middleware or hardware dependencies, which is what makes it testable in
-isolation. Every action component sits above it rather than beside it: the drive
-component rejects any motion command issued outside a permitted mission phase
-and emits an explicit stop on rejection, and the arm component was built against
-the same contract, so inverse kinematics dropped in later without renegotiating
-the interface.
-
-<Figure id="fortis-software-layers" />
-
-Two properties of that state machine matter more than the state count. Any state
-can transition to the fault state through an unguarded wildcard, which is what
-lets the drive-health monitor latch a fault from anywhere in the mission.
-Leaving the fault state requires an explicit operator acknowledgement, so
-recovery is never automatic: a drive that comes back healthy on its own does not
-clear the fault.
+A table-driven mission state machine with nine states and fifteen events
+authorizes all motion. It has no middleware or hardware dependencies, so the
+transition table was exercised exhaustively before it ran on a robot. The drive
+and arm components sit above it and reject any command outside a permitted
+phase, emitting an explicit stop on rejection. Any state can fault through an
+unguarded wildcard, and leaving the fault state requires operator
+acknowledgement, so recovery is never automatic.
 
 <Figure id="fortis-mission-states" />
 
-The drive data path runs from an operator teleoperation command, through an
-X-drive kinematics component that maps commanded body motion to four wheel
-velocity setpoints, out over CAN to four controllers running onboard velocity
-control. The kinematics constants are pinned to the robot description by a
-regression test, so the model and the code cannot drift apart silently.
+The X-drive kinematics constants are pinned to the robot description by a
+regression test, so the model the simulation sized against and the code the
+robot runs cannot drift apart quietly. Arm step timing lives on a dedicated
+microcontroller, because a step pulse delayed by the host scheduler is a lost
+position on a geared stepper. The whole stack ships as one ROS 2 Humble
+container with CI on every change, so five people on five machines ran a
+byte-identical environment.
 
-<Figure id="fortis-block-diagram" />
+<DataTable {...architecture} />
 
-### Perception and state estimation
+### Noticing what changed inside the vessel between runs
 
-Five depth cameras feed the stack: four on the chassis faces through a powered
-USB 3 hub with a single uplink to the Jetson, and one on the arm. Each camera
-back-projects its aligned depth into a point cloud, the clouds are transformed
-into the body frame and merged on a fixed-rate timer, and the merged cloud
-integrates into a persistent voxel map. A map saved on one run becomes the
-reference for the next, and the difference between them is published as a
-machine-readable summary. For an inspection robot whose whole job is noticing
-what changed inside a vessel between runs, that diff is the product.
-
-Visual odometry runs off the front camera and is keyframe-anchored: every frame
-is matched against the current keyframe rather than the previous frame, so
-per-frame matching noise does not compound between keyframe refreshes. Motion is
-recovered by lifting matched features through depth and solving for pose with
-outlier rejection.
-
-State estimation fuses those sources in an Extended Kalman Filter running on the
-Jetson. The interesting part is what is deliberately not fused. Wheel odometry
-contributes translation only, never heading, because the rear wheels slip under
-load and inject a phantom yaw rate the gyroscope never sees. Visual odometry
-contributes translation only as well, because its rotation quality collapses
-with feature count while the gyroscope stays uniform. The gyroscope owns yaw
-outright. Each translation source fails a different way, one by slip and one by
-tracking loss, so each is followed according to its own covariance and neither
-is ever trusted for heading.
+Four chassis depth cameras and one arm camera back-project into point clouds,
+merge in the body frame on a fixed-rate timer, and integrate into a persistent
+voxel map. A map saved on one run is the reference for the next, and the diff is
+published as a machine-readable summary. That diff is the product. Visual
+odometry off the front camera is keyframe-anchored so matching noise does not
+compound frame to frame, and YOLOv8 detection runs through ONNX on the same
+streams. Because the cameras cannot stream inside the container, a synthetic
+camera rig publishes the exact topic contract of the hardware, so the perception
+tests run for anyone on the team without the robot.
 
 <FortisPerceptionDiagram />
 
-Because the cameras cannot stream inside the development container, I built a
-synthetic camera rig that publishes the exact topic contract of the real
-hardware. The whole perception chain is developed and tested against it, then
-verified live on the Jetson.
+### Wheel slip poisons the heading estimate
 
-<Clip id="visionUi" />
+An Extended Kalman Filter fuses wheel odometry, visual odometry and inertial
+data on the Jetson. Wheel odometry contributes translation only, because the
+rear wheels slip under load and inject a phantom yaw rate the gyroscope never
+sees. Visual odometry contributes translation only, because its rotation quality
+collapses with feature count. The gyroscope owns yaw. Neither translation source
+is fused as an absolute position, only as a velocity, since both are open-loop
+dead reckoning and feeding their position in would inject unbounded drift as a
+measurement.
 
-### Design decisions
+### What ran on hardware
 
-The drivetrain decision came out of a study rather than a preference. The team
-started on skid-steer. I simulated the chassis performing the 90 degree point
-turn it would need over the 4.5 in step across 60 geometrically valid
-configurations. Three completed the turn. All three reached 85 to 116 degrees of
-tilt and drifted 7 to 10 inches radially, which is not a usable margin next to
-plasma-facing components. The reason is geometric: during a point turn every
-wheel arc crosses the step circle, so the wheels must climb a wall nearly equal
-to their own radius, and no wheelbase or track width avoids it.
+Holonomic drive under operator command with closed-loop wheel velocity and a
+toroidal orbit proved. Visual odometry across four simultaneous camera streams.
+Commanded arm motion through the reach envelope with object pick and stow, and
+the 3 lb payload retained through the stow motion.
 
-<DataTable {...skidSteer} />
-
-That redirected the architecture to an omnidirectional X-drive on omni wheels in
-a chamfered square chassis, which also won on the primary functional criterion:
-direct strafing for the toroidal orbit with no yaw required to translate. The
-wheels never cross the step at all, because the robot straddles it instead of
-turning over it. X-drive beat mecanum on mechanical grounds, since 90 degree
-rollers are simpler than 45 degree ones and the 45 degree corner mounting falls
-naturally out of the chamfered chassis.
-
-<Figure id="fortis-endoskeleton-cad" />
-
-<Figure id="fortis-internal-layout" />
-
-I designed the arm around two constraints that fight each other: it has to reach
-30 in across the sponsor's approved envelope, and it has to fold small enough to
-enter through the same port profile as the chassis. Every inch of reach costs
-actuator torque twice, once for the payload and once for the arm's own weight at
-that radius, and every actuator sized up to carry it adds its own weight back.
-At 50 in that loop diverged into motors the budget could not carry; at 30 in it
-closed inside the available stepper torque range while still meeting the
-requirement. Moving the links from aluminum to carbon fiber tube broke the
-spiral a second way, cutting link mass and routing the wiring internally through
-the hollow sections instead of hanging it off the outside. The folding geometry
-came out at three links that nest against each other into a 16.877 by 2.744 in
-stow profile, which is what lets a 30 in arm enter through an opening shorter
-than itself.
-
-<DataTable {...actuators} />
-
-<Figure id="fortis-arm-stow" />
-
-<Figure id="fortis-arm-subsystem" />
-
-Coordinated multi-axis stepping runs on a dedicated microcontroller rather than
-the host, so trajectory timing does not depend on the operating system
-scheduler. The host holds the analytic inverse kinematics and the motion action
-interface; the microcontroller holds the step timing.
+<Clip id="toroidal" />
 
 <Clip id="pickStow" />
 
-### Demonstrated
-
-Holonomic chassis drive under operator command with closed-loop wheel velocity,
-and toroidal orbit motion proved. Visual odometry across four simultaneous
-camera streams with inertial data retrieval. Commanded arm motion through the
-reach envelope with object pick and stow, and payload retained through the stow
-motion.
-
-<FigurePair ids={['fortis-machined-parts', 'fortis-welded-ring']} />
-
-<Figure id="fortis-front-face" />
+<Figure id="fortis-chassis-built" />
