@@ -1,8 +1,8 @@
 ---
 title: FORTIS
 priority: 1
-thesis: 'A tokamak was never designed to be serviced by a robot, so every dimension on this one was fixed before design began: a 15.75 in entry profile, a 4.5 in step to straddle, and a graphite interior nothing may touch.'
-role: Software, Simulation and Vision Lead, and overall technical lead
+thesis: 'A tethered inspection robot for the inside of a fusion reactor, built simulation-first. I owned the Isaac Sim program that sized it and the ROS 2 stack that runs it: mission logic, drive control, arm motion, perception, state estimation and the synthetic rig that made it testable without a robot.'
+role: Simulation and software lead, and overall technical lead
 org: UC Santa Cruz ECE senior capstone, sponsored by General Atomics
 dates: March 2026 to June 2026
 team: Five-person team
@@ -10,11 +10,12 @@ stack:
   - ROS 2 Humble
   - Isaac Sim
   - Python
+  - ros2_control
+  - robot_localization
+  - MoveIt 2
+  - OpenCV
   - Docker
   - Jetson Orin
-  - OpenCV
-  - CAN
-  - Teensy 4.1
 repo: https://github.com/nthankas/FORTIS
 caseStudy: fortis
 lead: fortis-wiring-asbuilt
@@ -29,7 +30,7 @@ artifacts:
     href: https://github.com/nthankas/FORTIS/blob/main/sim/analysis/orbit_analysis.md
 status: confirmed
 openQuestions: []
-description: 'FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I led the software, simulation and vision work: the ROS 2 architecture, the Isaac Sim studies that sized the drivetrain and arm, and the perception and state estimation stack.'
+description: 'FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I owned the Isaac Sim program that sized it and the ROS 2 stack that runs it: mission state machine, drive control, arm motion, perception, state estimation, synthetic test rig and CI.'
 ---
 
 import Figure from '../../components/Figure.astro';
@@ -38,156 +39,156 @@ import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
 import FortisPerceptionDiagram from '../../components/FortisPerceptionDiagram.astro';
 import {
-  chassisRequirements,
   skidSteer,
   armResults,
-  orbitResults,
   architecture,
 } from '../../data/fortis';
 
-FORTIS is a tethered, holonomic inspection robot for the interior of General
-Atomics' DIII-D tokamak. I was the technical lead on a five-person team and
-owned the software stack, the simulation program, the perception and state
-estimation, and the sizing of the chassis and arm. Teammates carried fabrication,
-the power system and a share of the CAD under my direction.
+FORTIS is a tethered inspection robot for the interior of General Atomics'
+DIII-D tokamak. I was the simulation and software lead on a five-person team
+and the technical lead overall: the Isaac Sim program, the ROS 2 workspace and
+its containers and CI, the mission state machine, drive control, the arm motion
+path, perception, state estimation and the synthetic test rig. Teammates owned
+the mechanicals, the power system and the arm firmware.
 
-The vessel sets the rules: a 15.75 inch entry profile, a 4.5 inch step to
-straddle, a low-friction graphite floor, nothing may be touched, and no budget
-for physical prototypes. Each section below is a problem that followed from
-that and what I built to solve it. The full write-up linked above has the
-figures, tables and demo clips for each.
+The constraints: a low-friction graphite floor nobody could test on, a vessel
+nothing may touch, no budget for prototypes, and a robot that did not exist for
+most of the term. Each section below is a problem that followed and what I
+built for it. The full write-up linked above has the figures, tables and demo
+clips for each.
 
-<DataTable {...chassisRequirements} />
+<DataTable {...architecture} />
 
 ### Free-body diagrams were answering the wrong question
 
 The program started with free-body motor sizing around a tank-tread chassis.
 The first physics test I ran in Isaac Sim showed a silicone tread could not hold
-traction on the 45 degree graphite slope: friction, not torque, was the binding
-constraint. From then on nothing was procured until it had been validated
+traction on the graphite slope: friction, not torque, was the binding
+constraint. From then on nothing was procured until it had been simulated
 against the reactor mesh, which I reduced from a 400 GB tile-resolved assembly
 to a hand-authored collision surface after MuJoCo crashed on it.
 
 ### The physics engine cannot model an omni wheel
 
-PhysX has no anisotropic friction, so a wheel that grips along its drive
-direction and rolls freely across it cannot be declared as a material. I turned
-the property into geometry: each perimeter roller became a chain of five spheres
-on a free axis, so the assembly rolls freely sideways while every sphere grips.
-The known bias is about 20 percent extra torque on matched runs, which makes
-every motor margin the simulation reported conservative by construction.
+PhysX has no anisotropic friction, so a wheel that grips along its drive axis
+and rolls freely across it cannot be declared as a material. Three iterations:
+rings of spheres, then the real roller meshes as a 44 degree-of-freedom
+articulation with convex hulls, then five-sphere roller colliders with
+deliberate gaps after a single sphere sank through the hub and seven spheres
+over-torqued. The model reads about 20 percent high on torque, so every motor
+margin it reported is conservative by construction.
 
-### The skid-steer chassis could not cross the step
+### The skid-steer chassis could not turn on the step
 
-I simulated the 90 degree point turn a skid-steer robot needs over the step
-across 60 configurations. Three completed it, all at 85 to 116 degrees of tilt
-and 7 to 10 inches of radial drift, because every wheel arc crosses the step
-circle mid-turn. That study moved the robot to an X-drive on omni wheels, which
-strafes the toroidal orbit with no yaw and never crosses the step at all.
+I wrote a parametric robot builder and swept 60 configurations through the
+point turn a skid-steer robot needs over the step. Three completed it, all at 85
+to 116 degrees of tilt, because every wheel arc crosses the step mid-turn. That
+study moved the program to an X-drive on omni wheels.
 
 <DataTable {...skidSteer} />
 
-### Sizing motors for a floor nobody could test on
+### A joint space that is mostly invalid
 
-One full orbit at each speed from 0.10 to 0.30 m/s, straddling the step, arm
-stowed. Worst-wheel 95th-percentile torque reaches 4.10 Nm against 4.98 Nm of
-continuous capability, with the conservative wheel model in place.
-
-<DataTable {...orbitResults} />
-
-### Sizing arm actuators over a joint space that is mostly invalid
-
-Most of the arm's joint space puts it through the chassis, the floor or the
-vessel wall. I wrote a constraint-aware Monte Carlo: 5,000 poses with the 3 lb
-payload in every sample, filtered to the 2,014 that are physically reachable,
-each checked for tip-over at the lightest plausible chassis mass. The same
-filtered set fed both the joint torque and the chassis stability analyses, so
-the two results describe the same robot. Every joint peaks below 60 percent of
-its continuous rating.
+Sizing the arm actuators meant sweeping a joint space that mostly puts the arm
+through the chassis, floor or vessel. I built a three-stage pipeline: a headless
+Monte Carlo of 5,000 poses over all four joints, an analytical post-filter for
+collision, envelope and tip-over that flags rather than drops, and plots. Every
+pose carries an analytic and a physics tip flag plus their disagreement, physics
+runs at the lightest plausible chassis mass, and the filtered set feeds both the
+torque and the stability analyses so they describe the same robot.
 
 <DataTable {...armResults} />
 
 <FigurePair ids={['fortis-mc-sampling', 'fortis-poloidal-map']} />
 
-### Turning a joystick into an orbit on a floor that slips
+### Motion is state-gated
 
-The X-drive inverse kinematics scale an over-limit twist uniformly so the
-commanded direction survives, and a regression test pins the kinematics
-constants to the robot description. A heading hold runs a PID on the
-gyroscope-owned yaw estimate so it never chases wheel slip, and an orbit
-generator turns a held button into a constant body twist with yaw rate equal to
-speed over radius, so the cameras keep facing the center column.
-
-<Clip id="controlDemo" />
-
-### Motion must never happen outside a permitted mission phase
-
-A table-driven mission state machine with nine states and fifteen events
-authorizes all motion. It has no middleware or hardware dependencies, so the
-transition table was exercised exhaustively before it ran on a robot. The drive
-and arm components sit above it and reject any command outside a permitted
-phase, emitting an explicit stop on rejection. Any state can fault through an
-unguarded wildcard, and leaving the fault state requires operator
-acknowledgement, so recovery is never automatic.
+A table-driven mission state machine, pure Python with no ROS dependency, holds
+nine states and fifteen events with guards over a context dictionary, so it was
+exercised exhaustively before it ran on a robot. Drive and arm sit above it and
+reject commands outside a permitted phase with explicit zeros, never silence.
+Three independent stop mechanisms, a separate arming lock, and a health bridge
+that folds the motor controllers' latched disarm reason into the error field so
+a fault cannot clear itself. Fault is reachable from any state; leaving it needs
+an operator acknowledgement.
 
 <Figure id="fortis-mission-states" />
 
-The X-drive kinematics constants are pinned to the robot description by a
-regression test, so the model the simulation sized against and the code the
-robot runs cannot drift apart quietly. Arm step timing lives on a dedicated
-microcontroller, because a step pulse delayed by the host scheduler is a lost
-position on a geared stepper. The whole stack ships as one ROS 2 Humble
-container with CI on every change, so five people on five machines ran a
-byte-identical environment.
+### Drive control on a floor that slips
 
-<DataTable {...architecture} />
+X-drive kinematics with uniform saturation so an over-limit command keeps its
+direction, through ros2_control to a velocity controller on the motor bus, with
+a mock hardware plugin so CI exercises the same controller config. A regression
+test pins the kinematics constants to the URDF. A heading hold runs a PID on the
+gyroscope-owned yaw estimate so it never chases wheel slip; an orbit generator
+turns a held button into a constant body twist that keeps the cameras on the
+center column. Off-robot UMBmark calibration and a velocity-loop autotuner
+close the loop on the real drivetrain.
+
+<Clip id="controlDemo" />
+
+### A description built for MoveIt 2, and the arm behind one contract
+
+The CAD tool's URDF export had closed loops, no collision geometry and no joint
+limits, so I wrote the description by hand: 26 links and 25 joints of clean
+primitives, limits on every arm joint, a mimic gripper, a tool center point for
+grasp planning, and a ros2_control block behind an argument. The arm is a
+MoveToPose action and two gripper services, gated on mission state. Behind the
+action is an analytic solver, yaw decoupled and the rest a planar two-link
+chain with elbow branches and deterministic pitch selection, closed to a
+millimeter across 81 poses in test. MoveIt 2 ships in both containers with
+cuMotion staged on the GPU image, and the analytic executor sits behind the same
+action so a planner replaces it without callers changing.
 
 ### Cameras that could not stream where the code was written
 
-The depth cameras cannot stream inside the dev container, so I built a synthetic
-camera rig that publishes the exact topic contract of the hardware for up to four
-mounts, over a procedural raycast scene with trackable texture and closed-form
-trajectories that give exact ground truth. Two scene variants differ by one added
-and one removed box of known volume, so the map-diff tests assert exact numbers.
+A synthetic camera rig publishes the exact topic contract of the real driver for
+up to four mounts over a raycast scene with analytic ground truth. The crux was
+aliasing: point-sampled speckle rendered a different pattern from every pose and
+visual odometry looked broken when the bug was the texture. The shader now
+fades speckle octaves with per-pixel surface footprint, so a point renders the
+same color from any pose.
 
-### Noticing what changed inside the vessel between runs
+### Noticing what changed inside the vessel
 
-Four chassis depth cameras and one arm camera back-project into point clouds,
-merge in the body frame on a fixed-rate timer, and integrate into a persistent
-voxel map. A map saved on one run is the reference for the next, and the diff is
-published as a machine-readable summary. That diff is the product. Visual
-odometry off the front camera is keyframe-anchored so matching noise does not
-compound frame to frame, and YOLOv8 detection runs through ONNX on the same
-streams, degrading to empty detections rather than crashing when no weights are
-on disk. An operator's click in the 3D panel becomes the mission target pose and
-the state machine event that moves orbit into targeting.
+Per-camera clouds, body-frame fusion that skips a missing transform instead of
+stalling, a sparse voxel grid with hit counts, and a cross-run diff published as
+markers and a machine-readable summary. Detection behind one interface with a
+blob backend for CI and YOLOv8 through ONNX for the robot, degrading to empty
+detections rather than crashing. A click in the 3D panel becomes the mission
+target and the event that advances the state machine.
 
 <FortisPerceptionDiagram />
 
 <Clip id="visionDemo" />
 
-### Wheel slip poisons the heading estimate
+### Visual odometry and wheel slip
 
-An Extended Kalman Filter fuses wheel odometry, visual odometry and inertial
-data on the Jetson. Wheel odometry contributes translation only, because the
-rear wheels slip under load and inject a phantom yaw rate the gyroscope never
-sees. Visual odometry contributes translation only, because its rotation quality
-collapses with feature count. The gyroscope owns yaw. Neither translation source
-is fused as an absolute position, only as a velocity, since both are open-loop
-dead reckoning and feeding their position in would inject unbounded drift as a
-measurement.
+Keyframe-anchored ORB with depth-lifted PnP RANSAC in a pure module; publishes
+nothing on tracking loss so the filter coasts; covariance scales with inlier
+count. On the public TUM RGB-D handheld sequence the core gives 0.052 m RMSE
+trajectory error over an 8.01 m path with zero tracking losses. The EKF fuses
+wheels and vision as velocity only and gives yaw to the gyro alone, because
+slipping rear wheels inject a phantom yaw rate. Gyro bias is estimated only
+while the drive is disarmed, the one trustworthy stillness signal.
+
+### Testing a robot that did not exist yet
+
+45 test files and 233 tests, run by CI on every push with per-package DDS domain
+isolation. Integration tests import topic names from the production modules so a
+rename fails loudly. The full-mission acceptance test drives the synthetic
+camera, the perception chain, the state machine and the arm stack against a
+firmware mock from idle through orbit, targeting, arm-at-view, pick, holding and
+return-home back to idle, every wait bounded.
 
 ### What ran on hardware
 
-On the sponsor's mockup of the port, tunnel and step: the full tunnel traversed
-with a quarter inch of side clearance, a toroidal strafe across the step above
-0.1 m/s with zero tipping events, 32.7 inches of arm reach, three of three
-pick-and-stow cycles with the 3 lb payload retained, and a 1.58 s E-stop.
+On the sponsor's mockup: the full tunnel traversed, a toroidal strafe across the
+step above target with zero tipping events, three of three pick-and-stow cycles
+with the payload retained, and a 1.58 s E-stop.
 
 <Clip id="toroidal" />
 
 <Clip id="pickStow" />
 
 <Clip id="demoPlaylist" />
-
-<Figure id="fortis-chassis-built" />
