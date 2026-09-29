@@ -1,10 +1,10 @@
 ---
 title: FORTIS
 priority: 1
-thesis: 'A tethered inspection robot for the inside of a fusion reactor, built simulation-first. I owned the Isaac Sim program that sized it and the ROS 2 stack that runs it: mission logic, drive control, arm motion, perception, state estimation and the synthetic rig that made it testable without a robot.'
+thesis: 'A tethered inspection robot for the inside of a fusion reactor, designed and operated in simulation before it existed. I owned the Isaac Sim program, which designed the robot, simulated its missions and left General Atomics a reusable reactor environment, and the ROS 2 stack and arm firmware that run it.'
 role: Simulation and software lead, and overall technical lead
 org: UC Santa Cruz ECE senior capstone, sponsored by General Atomics
-dates: March 2026 to June 2026
+dates: November 2025 to June 2026
 team: Five-person team
 stack:
   - ROS 2 Humble
@@ -16,6 +16,7 @@ stack:
   - OpenCV
   - Docker
   - Jetson Orin
+  - Teensy 4.1
 repo: https://github.com/nthankas/FORTIS
 caseStudy: fortis
 lead: fortis-wiring-asbuilt
@@ -30,7 +31,7 @@ artifacts:
     href: https://github.com/nthankas/FORTIS/blob/main/sim/analysis/orbit_analysis.md
 status: confirmed
 openQuestions: []
-description: 'FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I owned the Isaac Sim program that sized it and the ROS 2 stack that runs it: mission state machine, drive control, arm motion, perception, state estimation, synthetic test rig and CI.'
+description: 'FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I owned the Isaac Sim program that designed the robot and simulated its missions, the ROS 2 stack that runs it, and the arm motion firmware.'
 ---
 
 import Figure from '../../components/Figure.astro';
@@ -45,11 +46,13 @@ import {
 } from '../../data/fortis';
 
 FORTIS is a tethered inspection robot for the interior of General Atomics'
-DIII-D tokamak. I was the simulation and software lead on a five-person team
-and the technical lead overall: the Isaac Sim program, the ROS 2 workspace and
-its containers and CI, the mission state machine, drive control, the arm motion
-path, perception, state estimation and the synthetic test rig. Teammates owned
-the mechanicals, the power system and the arm firmware.
+DIII-D tokamak, November 2025 to June 2026. I was the simulation and software
+lead on a five-person team and the technical lead overall: the Isaac Sim program
+that designed the robot, simulated its missions and left the sponsor a reusable
+reactor environment; the ROS 2 workspace and its containers and CI; the mission
+state machine, drive control, the arm motion path and the arm firmware;
+perception, state estimation and the synthetic test rig. Teammates owned the
+mechanicals and the power system.
 
 The constraints: a low-friction graphite floor nobody could test on, a vessel
 nothing may touch, no budget for prototypes, and a robot that did not exist for
@@ -64,9 +67,11 @@ clips for each.
 The program started with free-body motor sizing around a tank-tread chassis.
 The first physics test I ran in Isaac Sim showed a silicone tread could not hold
 traction on the graphite slope: friction, not torque, was the binding
-constraint. From then on nothing was procured until it had been simulated
-against the reactor mesh, which I reduced from a 400 GB tile-resolved assembly
-to a hand-authored collision surface after MuJoCo crashed on it.
+constraint. From then on the robot was designed in the simulator: nothing was
+procured until it had been driven against the reactor mesh, which I reduced
+from a 400 GB tile-resolved assembly to a hand-authored collision surface after
+MuJoCo crashed on it. That environment, with the wheel and arm models, is the
+asset the sponsor keeps for future in-vessel work.
 
 ### The physics engine cannot model an omni wheel
 
@@ -127,13 +132,18 @@ close the loop on the real drivetrain.
 
 <Clip id="controlDemo" />
 
-### A description built for MoveIt 2, and the arm behind one contract
+### The arm, from firmware to MoveToPose
 
-The CAD tool's URDF export had closed loops, no collision geometry and no joint
-limits, so I wrote the description by hand: 26 links and 25 joints of clean
-primitives, limits on every arm joint, a mimic gripper, a tool center point for
-grasp planning, and a ros2_control block behind an argument. The arm is a
-MoveToPose action and two gripper services, gated on mission state. Behind the
+On the Teensy, a control state machine over boot, disabled, enabled, moving and
+fault drives three closed-loop steppers and two servos with coordinated
+hardware-timed stepping, behind a CRC-checked binary serial protocol at 1 Mbaud
+with a 250 ms heartbeat watchdog that disables the motors on comms loss, and
+teach-and-persist homing checkpointed to EEPROM so the arm boots homed. The CAD
+tool's URDF export had closed loops, no collision geometry and no joint limits,
+so I wrote the description by hand: 26 links and 25 joints of clean primitives,
+limits on every arm joint, a mimic gripper, a tool center point for grasp
+planning, and a ros2_control block behind an argument. The arm is a MoveToPose
+action and two gripper services, gated on mission state. Behind the
 action is an analytic solver, yaw decoupled and the rest a planar two-link
 chain with elbow branches and deterministic pitch selection, closed to a
 millimeter across 81 poses in test. MoveIt 2 ships in both containers with

@@ -21,7 +21,7 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
 <CaseStudy
   entry={entry}
-  standfirst="A tethered inspection robot for the inside of a fusion reactor, built simulation-first. I owned the Isaac Sim program that sized it and the ROS 2 stack that runs it: mission logic, drive control, the arm motion path, perception, state estimation, the synthetic test rig and the CI that holds it together. This page is about the software and the problems that shaped it."
+  standfirst="A tethered inspection robot for the inside of a fusion reactor, designed and operated in simulation before it existed. I owned the Isaac Sim program, which designed the robot, simulated its missions and left the sponsor a reusable reactor environment, and the ROS 2 stack and arm firmware that run it: mission logic, drive control, arm motion, perception, state estimation, the synthetic test rig and the CI that holds it together. This page is about the software and the problems that shaped it."
 >
   <h2>The problem</h2>
 
@@ -46,15 +46,19 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     I was the simulation and software lead on a five-person capstone team
-    and the technical lead overall. Mine were the Isaac Sim environment and
-    every study run in it, the ROS 2 workspace and its containers and CI,
-    the mission state machine, the drive control and kinematics, the arm
-    motion and serial bridge on the Jetson side, the perception and state
-    estimation stack, the synthetic camera rig, the operator interface
-    layouts, and the Jetson bring-up. I also turned simulation results into
-    requirements for the mechanical work and ran the sprint reviews that
-    gated design decisions. The chassis and arm mechanicals, the power
-    system, and the arm firmware on the Teensy were teammates' work.
+    and the technical lead overall, from November 2025 to June 2026. Mine
+    were the Isaac Sim program end to end: the reactor environment, the
+    robot models, the design studies that chose the drivetrain and sized the
+    arm, and the mission simulations that drove the robot through entry,
+    orbit and arm work before any of it was built. Mine too were the ROS 2
+    workspace and its containers and CI, the mission state machine, the
+    drive control and kinematics, the arm firmware on the Teensy and the
+    motion path above it, the perception and state estimation stack, the
+    synthetic camera rig, the operator interface layouts, and the Jetson
+    bring-up. I also turned simulation results into requirements for the
+    mechanical work and ran the sprint reviews that gated design decisions.
+    The chassis and arm mechanicals and the power system were teammates'
+    work.
   </p>
 
   <DataTable {...architecture} />
@@ -380,6 +384,58 @@ if (!entry) throw new Error('Missing project entry: fortis');
     real-motor workflow share one file.
   </p>
 
+  <h3>Arm firmware: deterministic timing and a fail-safe link</h3>
+
+  <p>
+    Step-and-direction control of a stepper needs pulse edges placed with
+    microsecond determinism, and a general-purpose operating system can
+    preempt a process for milliseconds, which on a step train is the
+    difference between smooth motion and a stalled joint. So the arm's
+    motion executor is firmware on a Teensy 4.1: a control state machine
+    over boot, disabled, enabled, moving and fault, with a command-dispatch
+    loop servicing the serial link between motion updates, coordinated
+    multi-axis stepping for the three closed-loop stepper joints from
+    hardware timers, and hardware PWM for the wrist and gripper servos. The
+    stepping library first chosen would not compile against the current
+    Teensy 4 core, so its Teensy 4 successor was vendored into the project
+    and the firmware adapted to it.
+  </p>
+
+  <p>
+    The link is safety-relevant and conductor-limited through the arm, so
+    it is a custom binary protocol rather than text or middleware over
+    serial: fixed-layout frames at 1 Mbaud with a start byte, length,
+    sequence counter, type, payload, CRC-16-CCITT over sequence, type and
+    payload, and an end byte, with commands for enable, disable, joint
+    targets, joint velocities, home and clear-faults, acknowledge and
+    negative-acknowledge responses with error codes, and asynchronous boot
+    and fault events. A 250 ms heartbeat watchdog disables the motors if
+    host traffic stops. Homing is teach-and-persist: the operator jogs the
+    arm to its home pose, one command declares it the zero and marks the
+    joints homed, and the reference is checkpointed to EEPROM in ping-pong
+    slots with per-slot CRC, so the arm boots already homed and a power
+    cycle recovers a valid position rather than an arbitrary one. The
+    cycloidal joints are near self-locking unpowered, which is what makes a
+    saved zero trustworthy. Safety is layered: motion is gated on drivers
+    enabled and joints homed, faults latch until explicitly cleared, an
+    external emergency-stop input is honored, and the heartbeat is the
+    comms-loss interlock.
+  </p>
+
+  <p>
+    The protocol was exercised first entirely in software against a
+    pseudo-terminal mock of the firmware, then a host client drove the real
+    board over USB, then the signal chain was verified at the level-shifter
+    outputs before any driver was connected. One bring-up episode is worth
+    recording: two joints held torque but would not step despite clean
+    pulses on the oscilloscope. Tracing from the controller pin outward
+    found two independent faults, one driver's control-signal selector left
+    at the wrong logic level and one loose level-shifter jumper that scoped
+    correctly on a high-impedance probe but carried no load. Verifying
+    signal levels before connecting drivers is what kept those from becoming
+    smoked hardware.
+  </p>
+
   <h3>Arm motion and the MoveToPose contract</h3>
 
   <p>
@@ -428,11 +484,10 @@ if (!entry) throw new Error('Missing project entry: fortis');
     poll, with status frames republished as joint states calibrated to
     radians and meters, a latched arm status message and diagnostics with
     decoded fault names. Firmware faults are forwarded as mission fault
-    events. The frame codec is pure standard library, CRC-16 over sequence,
-    type and payload, and a pseudo-terminal mock of the firmware lets the
-    bridge, the motion node and the full mission test run with no board
-    attached. The firmware itself was the embedded lead's; the Jetson side
-    of the link is mine.
+    events. The frame codec is pure standard library and mirrors the
+    firmware's framing exactly, so the bridge, the mock and the tests share
+    one implementation, and the pseudo-terminal mock lets the bridge, the
+    motion node and the full mission test run with no board attached.
   </p>
 
   <Figure id="fortis-arm-subsystem" />
