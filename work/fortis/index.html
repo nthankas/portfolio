@@ -1,0 +1,482 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FORTIS · Nikhil Thankasala</title><meta name="description" content="FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I owned the Isaac Sim program that designed the robot and simulated its missions, the ROS 2 stack that runs it, and the arm motion firmware."><link rel="canonical" href="https://nthankas.github.io/portfolio/work/fortis/"><meta property="og:type" content="website"><meta property="og:title" content="FORTIS · Nikhil Thankasala"><meta property="og:description" content="FORTIS is a tethered holonomic inspection robot for the interior of the DIII-D tokamak. I owned the Isaac Sim program that designed the robot and simulated its missions, the ROS 2 stack that runs it, and the arm motion firmware."><meta property="og:url" content="https://nthankas.github.io/portfolio/work/fortis/"><meta property="og:site_name" content="Nikhil Thankasala"><meta property="og:image" content="https://nthankas.github.io/portfolio/og/fortis.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="author" content="Nikhil Thankasala"><meta name="theme-color" content="#1f3b63"><link rel="icon" href="/portfolio/favicon.svg" type="image/svg+xml"><link rel="sitemap" href="/portfolio/sitemap-index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Nikhil Thankasala","email":"mailto:nikhilthankasala@gmail.com","url":"https://nthankas.github.io/portfolio","jobTitle":"Robotics software engineer","sameAs":["https://github.com/nthankas","https://www.linkedin.com/in/nikhil-thankasala"],"alumniOf":{"@type":"CollegeOrUniversity","name":"University of California, Santa Cruz"}}</script><link rel="stylesheet" href="/portfolio/_astro/fortis.C_XdjIjm.css"></head> <body> <a class="skip-link" href="#main">Skip to content</a> <header class="bar"> <div class="wrap"> <a class="name" href="/portfolio/">nikhil thankasala</a> <nav aria-label="Sections"> <a href="/portfolio/#projects">Projects</a><a href="/portfolio/#experience">Experience</a><a href="/portfolio/#contact">Contact</a> <a href="/portfolio/nikhil-thankasala-resume.pdf">Resume</a> </nav> </div> </header> <main id="main">  <article class="wrap"> <div class="case-bar"> <h1>FORTIS</h1> <nav aria-label="Project links"> <a href="https://github.com/nthankas/FORTIS" rel="noopener">Repository</a><a href="https://github.com/nthankas/FORTIS/blob/main/sim/analysis/skid_steer_rejection.md" rel="noopener">Skid-steer rejection study</a><a href="https://github.com/nthankas/FORTIS/blob/main/sim/analysis/xdrive_analysis.md" rel="noopener">X-drive analysis</a><a href="https://github.com/nthankas/FORTIS/blob/main/sim/analysis/orbit_analysis.md" rel="noopener">Orbit analysis</a> <a class="close" href="/portfolio/#projects" aria-label="Back to all projects" title="Back to all projects">&#x2715;</a> </nav> </div> <div class="case"> <p class="lede">A tethered inspection robot for the inside of a fusion reactor, designed and operated in simulation before it existed. I owned the Isaac Sim program, which designed the robot, simulated its missions and left the sponsor a reusable reactor environment, and the ROS 2 stack and arm firmware that run it: mission logic, drive control, arm motion, perception, state estimation, the synthetic test rig and the CI that holds it together. This page is about the software and the problems that shaped it.</p> <dl class="facts"> <div><dt>Role</dt><dd>Simulation and software lead, and overall technical lead</dd></div> <div><dt>Context</dt><dd>UC Santa Cruz ECE senior capstone, sponsored by General Atomics</dd></div> <div><dt>Dates</dt><dd>November 2025 to June 2026</dd></div> <div><dt>Team</dt><dd>Five-person team</dd></div> <div><dt>Stack</dt><dd>ROS 2 Humble, Isaac Sim, Python, ros2_control, robot_localization, MoveIt 2, OpenCV, Docker, Jetson Orin, Teensy 4.1</dd></div> </dl>  <h2>The problem</h2> <p>
+DIII-D is a fusion research tokamak at General Atomics. The sponsor
+    wanted a tethered robot that could enter through a port, orbit the
+    graphite floor, and carry an arm for camera inspection and small
+    manipulation, with all compute on the robot and everything down one
+    tether. The floor is low-friction and uncertain, nothing inside may be
+    touched or modified, and there was no budget for physical prototypes.
+    Every drivetrain and arm decision therefore had to be made in
+    simulation against the real reactor geometry and be right the first
+    time, and the software had to be testable without the robot, because
+    the robot did not exist for most of the term.
+</p> <figure> <img src="/portfolio/_astro/fortis-diiid-tokamak-context.CiVF5bvU_Z1V9bXx.webp" srcset="/portfolio/_astro/fortis-diiid-tokamak-context.CiVF5bvU_Z1V9bXx.webp 1x, /portfolio/_astro/fortis-diiid-tokamak-context.CiVF5bvU_iawfR.webp 2x" alt="Photograph looking into the DIII-D vacuum vessel. The toroidal chamber curves away in both directions around a tall tiled center column, and a person in a green coverall stands inside the chamber at the right, roughly as tall as the column is wide." loading="eager" decoding="async" fetchpriority="auto" width="1000" height="668"> <figcaption> The operating environment, with a person inside for scale. Every interior surface is tiled and none of it may be modified or contacted. <span class="figcaption__source">Source: General Atomics DIII-D reference photograph.</span> </figcaption> </figure> <div class="table-wrap"> <table> <caption>Sponsor-defined capability tiers</caption> <thead> <tr> <th scope="col"> Tier </th><th scope="col"> Capability </th><th scope="col"> Definition </th> </tr> </thead> <tbody> <tr> <th scope="row"> 1 </th><td>Floor traversal</td><td>Enter R0, traverse the tunnel, orbit toroidally</td> </tr><tr> <th scope="row"> 2 </th><td>Arm reach</td><td>Deploy a 30 in arm across the approved envelope</td> </tr><tr> <th scope="row"> 3 </th><td>Pick and stow</td><td>Pick a 3 lb object, stow the arm, retain the payload</td> </tr><tr> <th scope="row"> 4 </th><td>Lowering mechanism</td><td>Descoped to future work</td> </tr> </tbody> </table> </div> <h2>What I owned</h2> <p>
+I was the simulation and software lead on a five-person capstone team
+    and the technical lead overall, from November 2025 to June 2026. Mine
+    were the Isaac Sim program end to end: the reactor environment, the
+    robot models, the design studies that chose the drivetrain and sized the
+    arm, and the mission simulations that drove the robot through entry,
+    orbit and arm work before any of it was built. Mine too were the ROS 2
+    workspace and its containers and CI, the mission state machine, the
+    drive control and kinematics, the arm firmware on the Teensy and the
+    motion path above it, the perception and state estimation stack, the
+    synthetic camera rig, the operator interface layouts, and the Jetson
+    bring-up. I also turned simulation results into requirements for the
+    mechanical work and ran the sprint reviews that gated design decisions.
+    The chassis and arm mechanicals and the power system were teammates'
+    work.
+</p> <div class="table-wrap"> <table> <caption>Workspace as pulled from the repository this session</caption> <thead> <tr> <th scope="col"> Component </th><th scope="col"> Responsibility </th><th scope="col" class="num"> Tests </th> </tr> </thead> <tbody> <tr> <th scope="row"> Mission supervisor </th><td>Table-driven state machine, authorises all motion</td><td class="num">37</td> </tr><tr> <th scope="row"> Drive control </th><td>X-drive kinematics to wheel setpoints, state gated</td><td class="num">30</td> </tr><tr> <th scope="row"> Arm control </th><td>Analytic inverse kinematics, motion action, motor bridge</td><td class="num">28</td> </tr><tr> <th scope="row"> Perception </th><td>Clouds, fusion, voxel map and diff, visual odometry, detection</td><td class="num">27</td> </tr><tr> <th scope="row"> Localisation </th><td>Wheel odometry, gyro debias, EKF composition</td><td class="num">21</td> </tr><tr> <th scope="row"> Simulation support </th><td>Synthetic camera rig standing in for hardware</td><td class="num">23</td> </tr><tr> <th scope="row"> Motor control wiring </th><td>Controller manager configuration and bring-up</td><td class="num">23</td> </tr><tr> <th scope="row"> Integration tests </th><td>Cross-component seams</td><td class="num">34</td> </tr><tr> <th scope="row"> Shared message types </th><td>Interface contract between components</td><td class="num">n/a</td> </tr> </tbody> </table> </div> <p>
+Eleven ROS 2 packages plus the simulation tooling, roughly fifteen
+    thousand lines of Python, 45 test files and 233 test functions, built
+    and tested on every push by CI. The rest of this page walks through the
+    problems in the order they were hit.
+</p> <h2>Simulation</h2> <h3>Free-body diagrams were answering the wrong question</h3> <p>
+The program started the way motor sizing usually does, with free-body
+    analysis around a tank-tread chassis. The first physics test I ran in
+    Isaac Sim invalidated it: a silicone tread on the 45 degree graphite
+    slope could not hold traction, because silicone-on-graphite friction is
+    too low to resist sliding at that grade. Friction, not torque, was the
+    binding constraint, and the analysis had assumed the one thing it
+    needed to prove. From then on nothing was procured until it had been
+    simulated against the reactor mesh. Eight weeks of tread design were
+    discarded, in simulation rather than after a purchase, and the slope
+    was declared untraversable, which fixed the mission to the two lower
+    floors.
+</p> <figure> <img src="/portfolio/_astro/fortis-simulation-driven-validation-loop.BXiplZmC_Z29YR76.webp" srcset="/portfolio/_astro/fortis-simulation-driven-validation-loop.BXiplZmC_Z29YR76.webp 1x, /portfolio/_astro/fortis-simulation-driven-validation-loop.BXiplZmC_1TV3q7.webp 2x" alt="Flow diagram of the design iteration loop. Electromechanical leads supply geometry, motors and materials to Isaac Sim, which simulates kinematics, torques and stability and returns results to a sprint review gate asking whether the design is viable. A dashed feedback path from the gate returns to the leads to revise geometry, motors, materials, arm length and weight. A second path goes to a power lead review and then to a converged design with the arm length locked at 30 inches and the bill of materials set." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="636"> <figcaption> The loop that replaced physical prototypes. No geometry left the loop until a sprint review had seen simulated torque and stability numbers for it. <span class="figcaption__source">Source: FORTIS design defense deck</span> </figcaption> </figure> <h3>A reactor model no physics engine could collide against</h3> <p>
+The sponsor's model was a tile-resolved SolidWorks assembly on the
+    order of 400 GB. MuJoCo was the first simulator and crashed during
+    contact resolution on the dense geometry even after reduction. I moved
+    the program to Isaac Sim on PhysX 5 and built a reduction pipeline: a
+    smoothed STEP export replaced per-tile geometry with continuous
+    surfaces, the upper vessel half and outer shell that the robot never
+    touches were removed, the slope became a parametric ramp for solver
+    stability, and the open edges at the step were closed because they
+    produced collision glitches. Collision was then authored by hand in
+    the Isaac Sim GUI, and the result is committed as an artifact that is
+    never regenerated.
+</p> <p>
+Three engine constraints shaped every script after that. The Isaac Sim
+    world singleton cannot be torn down and recreated in one process, so
+    every parametric sweep runs one subprocess per test point and
+    aggregates results outside. Triangle-mesh collision is static-only, so
+    every dynamic body uses signed-distance-field, convex-hull or
+    convex-decomposition collision instead. And the CAD could not be
+    imported for physics, because gearbox internals form closed kinematic
+    loops the articulation solver rejects, so every dynamic body was
+    rebuilt from primitives with real masses.
+</p> <h3>The physics engine cannot model an omni wheel</h3> <p>
+Everything depended on simulating a holonomic drive on a slippery
+    floor, and PhysX has no anisotropic friction. An omni wheel grips along
+    its drive direction and rolls freely across it on passive rollers, and
+    there is no way to declare a contact material that behaves differently
+    along two axes. This took three iterations to get right.
+</p> <p>
+The first model approximated each wheel as rings of spheres, 72 per
+    wheel, which drove but carried more friction than a real roller. The
+    second imported the real wheel meshes and built each roller as its own
+    rigid body on a free revolute joint, a 44 degree-of-freedom
+    articulation per robot, with a convex hull on every roller barrel so
+    the anisotropy came from geometry rather than a material property. That
+    was physically right and numerically wrong: under load a single-sphere
+    roller collider sank through the wheel hub, and a seven-sphere version
+    over-torqued. The canonical model became a five-sphere chain per roller,
+    with deliberate gaps between the spheres, because a continuous ring of
+    spheres collides isotropically and degenerates back into a cylinder,
+    erasing the very freedom the model exists to capture.
+</p> <p>
+I validated the five-sphere model against the single-sphere baseline
+    with a full orbit sweep and kept the bias on the record: sphere chains
+    resist more than free-spinning rollers, roughly 20 percent more torque
+    on matched runs, so every motor margin the simulation reported is
+    conservative by construction. A model biased the other way would have
+    been useless for sizing motors.
+</p> <figure> <img src="/portfolio/_astro/fortis-orbit-sim-torque-vs-speed.CCozXetO_26Vkxv.webp" srcset="/portfolio/_astro/fortis-orbit-sim-torque-vs-speed.CCozXetO_26Vkxv.webp 1x, /portfolio/_astro/fortis-orbit-sim-torque-vs-speed.CCozXetO_1OfPyQ.webp 2x" alt="Screenshot of the Isaac Sim viewport looking straight down into the reactor model. The vessel is a ring of tiled floor panels around a dark centre bore, and the robot sits on the outer floor at the bottom of the ring, small against the vessel, oriented for a toroidal orbit." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="519"> <figcaption> The simulation the drivetrain numbers came from: the chassis on the reactor floor in Isaac Sim, viewed from above, mid orbit. <span class="figcaption__source">Source: Isaac Sim capture, orbit test.</span> </figcaption> </figure> <h3>The skid-steer chassis could not turn on the step</h3> <p>
+After treads, the team moved to skid-steer. To orbit from its landing
+    orientation the robot has to point-turn while straddling a 4.5 inch
+    step. I wrote a parametric robot builder and swept 60 geometrically
+    valid configurations of wheel radius, width, wheelbase, track and
+    torque. Three completed the turn, all at 85 to 116 degrees of tilt with
+    7 to 10 inches of radial drift, because every wheel arc crosses the step
+    circle mid-turn and the wheels must climb a wall nearly their own
+    radius. On the flat floor the differential wheel speed could not even
+    generate the shear to rotate. That study, run with a friction
+    coefficient more generous than the real floor, moved the program to an
+    X-drive on omni wheels, which strafes the orbit with no yaw and never
+    crosses the step.
+</p> <div class="table-wrap"> <table> <caption>Skid-steer step-crossing study, 60 configurations simulated</caption> <thead> <tr> <th scope="col"> Outcome </th><th scope="col" class="num"> Configs </th><th scope="col" class="num"> Max tilt (deg) </th><th scope="col" class="num"> Radial drift (in) </th> </tr> </thead> <tbody> <tr> <th scope="row"> Completed the 90 deg turn </th><td class="num">3</td><td class="num">85 to 116</td><td class="num">7.0 to 10.1</td> </tr><tr> <th scope="row"> Failed to complete the turn </th><td class="num">57</td><td class="num">n/a</td><td class="num">n/a</td> </tr><tr> <th scope="row"> Completed within safe tilt </th><td class="num hi">0</td><td class="num">n/a</td><td class="num">n/a</td> </tr> </tbody> </table> </div> <h3>Measuring torque honestly</h3> <p>
+The orbit sweep that sized the drive motors commands wheel velocities
+    from a single inverse kinematics call after a settle and never corrects
+    them, so the chassis drifts radially and tracking sits at 18 to 24
+    percent by design. An open-loop command yields an honest torque
+    measurement; a closed-loop tracker fighting position error would
+    inflate the reading. The same sweep exposed the radius drift as a
+    controls problem: the yaw rate was computed for the configured radius
+    rather than the measured one, so the robot spiralled inward. That
+    diagnosis is what the orbit generator in the drive stack was later
+    written around.
+</p> <div class="table-wrap"> <table> <caption>Orbit torque sweep, worst wheel per commanded speed</caption> <thead> <tr> <th scope="col" class="num"> Commanded speed (m/s) </th><th scope="col" class="num"> Mean (Nm) </th><th scope="col" class="num"> P95 (Nm) </th><th scope="col" class="num"> Peak (Nm) </th> </tr> </thead> <tbody> <tr> <th scope="row" class="num"> 0.10 </th><td class="num">0.92</td><td class="num">3.44</td><td class="num">7.45</td> </tr><tr> <th scope="row" class="num"> 0.15 </th><td class="num">1.02</td><td class="num">3.25</td><td class="num">7.98</td> </tr><tr> <th scope="row" class="num"> 0.20 </th><td class="num">1.15</td><td class="num">3.45</td><td class="num">9.81</td> </tr><tr> <th scope="row" class="num"> 0.25 </th><td class="num">1.22</td><td class="num">3.59</td><td class="num">10.64</td> </tr><tr> <th scope="row" class="num"> 0.30 </th><td class="num">1.31</td><td class="num hi">4.10</td><td class="num">10.93</td> </tr> </tbody> </table> </div> <figure> <img src="/portfolio/_astro/fortis-orbit-sim-topview.CXGgPg9Q_1oizY7.webp" srcset="/portfolio/_astro/fortis-orbit-sim-topview.CXGgPg9Q_1oizY7.webp 1x, /portfolio/_astro/fortis-orbit-sim-topview.CXGgPg9Q_1tyBbL.webp 2x" alt="Line chart of per-wheel torque against commanded orbit speed from 0.10 to 0.30 meters per second. Four solid lines show 95th-percentile torque per wheel and four dashed lines show mean torque. The front-left wheel is highest throughout, rising from 3.44 to 4.10 newton meters. The other three wheels track between 2.06 and 3.49 newton meters. Horizontal reference lines mark motor continuous ratings at 3.32, 4.98 and 5.81 newton meters." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="636"> <figcaption> Worst-wheel 95th-percentile torque stays under the 60 A continuous rating of 4.98 Nm across the whole speed range. The front-left wheel runs consistently highest because the arm center of gravity sits forward of chassis center. <span class="figcaption__source">Source: Isaac Sim orbit sweep, 5-sphere roller model.</span> </figcaption> </figure> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1jn3fZGEAZ2xPNyW2ASwgrBdba79Qv33c/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Isaac Sim orbit test: the chassis driving one full toroidal orbit while straddling the step, which is the run the per-wheel torque sweep was measured from." width="1000" height="562"></iframe> <figcaption> Isaac Sim orbit test: the chassis driving one full toroidal orbit while straddling the step, which is the run the per-wheel torque sweep was measured from. <span class="figcaption__source">Source: Isaac Sim capture.</span> </figcaption> </figure> </div> <h3>A joint space that is mostly invalid</h3> <p>
+Sizing the arm actuators meant sweeping its joint space, and most of
+    that space puts the arm through the chassis, the floor or the vessel
+    wall. A torque statistic over those poses describes a robot that cannot
+    exist. I built a three-stage pipeline: a headless Monte Carlo sweep of
+    5,000 poses drawn uniformly over all four joints at a fixed seed, with
+    the payload applied in every sample; an analytical post-filter for
+    chassis, self and floor collision, the reactor envelope and tip-over;
+    and a plotting stage. The base yaw joint is sampled rather than fixed,
+    because stability depends on it, and the sampler's uniformity is
+    checked before anything is trusted, since pass rates over a biased
+    draw are not pass rates.
+</p> <p>
+The filter never drops unstable poses. Every pose carries an analytic
+    tip flag from projecting the center of gravity against the support
+    polygon and a physics tip flag from the settle in simulation, plus a
+    disagreement flag between them, so the two checks audit each other. The
+    physics runs at the lightest plausible chassis mass and the margins are
+    reported at the realistic one, an intentional asymmetry that makes every
+    stability conclusion conservative. The filtered set is the shared input
+    to both the joint torque and the chassis stability analyses, so
+    actuator sizing and tip-over margin describe the same robot.
+</p> <div class="table-wrap"> <table> <caption>Constraint-aware Monte Carlo over the arm joint space</caption> <thead> <tr> <th scope="col"> Result </th><th scope="col" class="num"> Value </th> </tr> </thead> <tbody> <tr> <th scope="row"> Poses sampled uniformly across J1 to J4 </th><td class="num">5,000</td> </tr><tr> <th scope="row"> Rejected by chassis, self and floor collision </th><td class="num">2,380</td> </tr><tr> <th scope="row"> Rejected by the reactor envelope filter </th><td class="num">606</td> </tr><tr> <th scope="row"> Reachable and collision-free inside the vessel </th><td class="num">2,014</td> </tr><tr> <th scope="row"> Analytically unstable poses </th><td class="num hi">0</td> </tr><tr> <th scope="row"> Stable under worst-case chassis mass </th><td class="num">1,989 of 2,014</td> </tr><tr> <th scope="row"> Worst tipping margin over valid poses </th><td class="num">0.022 m</td> </tr><tr> <th scope="row"> Mean tipping margin over valid poses </th><td class="num">0.081 m</td> </tr> </tbody> </table> </div> <div class="figure-pair"> <figure> <img src="/portfolio/_astro/fortis-arm-montecarlo-pose-sweep.SPdABW-p_26kd85.webp" srcset="/portfolio/_astro/fortis-arm-montecarlo-pose-sweep.SPdABW-p_26kd85.webp 1x, /portfolio/_astro/fortis-arm-montecarlo-pose-sweep.SPdABW-p_2uthVm.webp 2x" alt="Four histograms side by side, one per joint, each showing 5,000 Monte Carlo draws binned across the joint range. J1, J2 and J3 span plus and minus 180 degrees and J4 spans plus and minus 100 degrees. A dashed reference line at 139 counts per bin marks the expected uniform density, and every histogram sits close to it." loading="lazy" decoding="async" fetchpriority="auto" width="620" height="158"> <figcaption> Verification that the joint-space draws were actually uniform before any filtering. Checking the sampler is what makes the downstream pass rates meaningful. <span class="figcaption__source">Source: Isaac Sim Monte Carlo sweep, sampling histogram.</span> </figcaption> </figure><figure> <img src="/portfolio/_astro/fortis-arm-joint-torque-results.ZpH2B0fX_ZdBvxk.webp" srcset="/portfolio/_astro/fortis-arm-joint-torque-results.ZpH2B0fX_ZdBvxk.webp 1x, /portfolio/_astro/fortis-arm-joint-torque-results.ZpH2B0fX_ZDHXEJ.webp 2x" alt="Scatter plot on a DIII-D poloidal cross-section, with radius in inches on the horizontal axis and height in inches on the vertical. The center stack is a vertical line at left and the outer wall is a curve at right. A side view of the chassis straddling the step sits at the bottom near minus 45 inches. Several thousand reachable end-effector points fan out above it, colored by analytical tipping margin on a scale from red to green; effectively all points are green, meaning positive margin." loading="lazy" decoding="async" fetchpriority="auto" width="620" height="679"> <figcaption> Reachable end-effector positions inside the vessel envelope, colored by tipping margin. The arm base sits at the chassis on the step and the reachable set stays clear of the center stack and the outer wall. <span class="figcaption__source">Source: Isaac Sim Monte Carlo sweep, plotted against the DIII-D poloidal cross-section. Pose counts on the plot are from an earlier filter revision than the tables.</span> </figcaption> </figure> </div> <div class="table-wrap"> <table> <caption>Arm actuator selection against simulated demand</caption> <thead> <tr> <th scope="col"> Joint </th><th scope="col"> Actuator </th><th scope="col" class="num"> Continuous rating (Nm) </th><th scope="col" class="num"> P95 demand (Nm) </th><th scope="col" class="num"> Peak demand (Nm) </th> </tr> </thead> <tbody> <tr> <th scope="row"> J1 yaw </th><td>NEMA 17, 25:1 cycloidal</td><td class="num">12.0</td><td class="num">0.05</td><td class="num">4.52</td> </tr><tr> <th scope="row"> J2 shoulder </th><td>NEMA 23, 20:1 planetary</td><td class="num">30.0</td><td class="num">14.67</td><td class="num">17.62</td> </tr><tr> <th scope="row"> J3 elbow </th><td>NEMA 17, 25:1 cycloidal</td><td class="num">12.0</td><td class="num">5.96</td><td class="num">6.74</td> </tr><tr> <th scope="row"> J4 wrist </th><td>Servo</td><td class="num">4.9</td><td class="num">1.90</td><td class="num">1.95</td> </tr> </tbody> </table> </div> <p>
+The 25 poses that tip in physics but not analytically are dynamic
+    rocking on the step, a mode only the physics check can see. The same
+    sweep is what cut the sponsor's 50 inch reach to 30: at 50 the
+    shoulder's demand passed any gearbox the project could source, and at 30
+    every joint came inside margin.
+</p> <figure> <img src="/portfolio/_astro/fortis-arm-stability-poloidal-map.FgNmt_P__f2S3P.webp" srcset="/portfolio/_astro/fortis-arm-stability-poloidal-map.FgNmt_P__f2S3P.webp 1x, /portfolio/_astro/fortis-arm-stability-poloidal-map.FgNmt_P__UH6C5.webp 2x" alt="Grouped bar chart of torque per arm joint over 2,014 valid Monte Carlo poses, with mean, 95th percentile and peak bars for each joint and a dashed continuous-rating line above each group. J1 yaw peaks at 4.52 against a 12 newton metre rating. J2 shoulder is the loaded joint, with a mean of 7.43, 95th percentile of 14.67 and peak of 17.62 against a 30 newton metre rating. J3 elbow peaks at 6.74 against 12. J4 wrist peaks at 1.95 against 4.9." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="550"> <figcaption> Per-joint torque across the reachable pose set. Every joint peaks below 60 percent of its continuous rating, and J2 carries roughly 1.7 times margin at its worst pose. <span class="figcaption__source">Source: Isaac Sim Monte Carlo sweep, 5,000 samples filtered to 2,014 valid poses.</span> </figcaption> </figure> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1syO_u6rCnMnn3ILzld-GY0pYJCIegZ7K/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Isaac Sim arm run: the 30 inch carbon fiber arm moving through the reach envelope under a 3 lb payload, which is the configuration the actuator sizing was computed against." width="1000" height="562"></iframe> <figcaption> Isaac Sim arm run: the 30 inch carbon fiber arm moving through the reach envelope under a 3 lb payload, which is the configuration the actuator sizing was computed against. <span class="figcaption__source">Source: Isaac Sim capture.</span> </figcaption> </figure> </div> <h2>The ROS 2 stack</h2> <h3>Infrastructure before nodes</h3> <p>
+Five people on five machines needed one software target, and the stack
+    had to deploy to a Jetson. The effort began with infrastructure. Two
+    containers share one ROS 2 Humble source tree: a CPU image that is the
+    default for everyone and builds on x86 and ARM, and a GPU overlay on
+    the Isaac ROS base that adds cuVSLAM, nvblox, cuMotion with its MoveIt 2
+    adapter and GPU image processing for the machines that can use them.
+    Both carry MoveIt 2, ros2_control, robot_localization and a Foxglove
+    bridge. A small shell wrapper turns bring-up, branch switching and
+    exec-into-container into one-line commands, so flipping the Jetson to a
+    branch is a single operation.
+</p> <p>
+Lint runs on every commit through pre-commit and again in CI, and CI
+    builds and tests the whole workspace on every pull request. Two
+    isolation rules keep those tests honest: every package pins its own
+    ROS domain id in a test fixture so parallel test processes cannot
+    cross-talk over DDS, and CI runs packages sequentially as a second
+    guard. Upstream hardware packages are vendored by a script from a pinned
+    manifest rather than copied in.
+</p> <h3>Motion is state-gated</h3> <p>
+Inside a vessel that must not be touched, a drive or arm command
+    arriving at the wrong moment is the worst failure available. The
+    mission state machine is pure Python with no ROS or hardware
+    dependency: nine states and fifteen events, with every transition and
+    its guard expressed as a row in a table rather than nested
+    conditionals. Guards read a context dictionary the caller supplies, so
+    the same step with a different context is deterministic and the whole
+    table was exercised exhaustively before it touched a robot. The machine
+    can export itself as a diagram, a thin node bridges it to one topic per
+    event and one per guard flag, and a terminal console drives it by hand
+    during bring-up.
+</p> <figure> <img src="/portfolio/_astro/fortis-software-integration-b.Jp78Hvr1_ZTmial.webp" srcset="/portfolio/_astro/fortis-software-integration-b.Jp78Hvr1_ZTmial.webp 1x, /portfolio/_astro/fortis-software-integration-b.Jp78Hvr1_RM8CG.webp 2x" alt="Mission state diagram with eight boxes and directed arrows. IDLE leads to ORBIT, then TARGETING, then ARM_AT_VIEW. From ARM_AT_VIEW a bidirectional pair connects to INSPECT and a one-way arrow leads to PICK, then HOLDING. Both HOLDING and ARM_AT_VIEW return to RETURN_HOME, which returns to IDLE. A footnote states the FAULT state is reachable from any state on guard violation and is omitted for clarity." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="554"> <figcaption> Mission phases and the transitions between them. The FAULT state is reachable from every state through an unguarded wildcard, which is what lets the drive-health monitor latch a fault from anywhere. <span class="figcaption__source">Source: FORTIS design defense deck</span> </figcaption> </figure> <p>
+Every action component sits above that machine rather than beside it.
+    The drive accepts velocity commands only in the orbit and return-home
+    states, and anything else, including the window before any state has
+    arrived, is rejected. A rejected command publishes explicit zeros on
+    both the internal wheel topic and the controller's command topic,
+    because a safety brake should never have to infer a stop from the
+    absence of a message. Two more mechanisms stop the wheels independently
+    of the operator's client: entering any non-driving state commands zeros
+    at once, and a dead-man watchdog commands zeros if no velocity arrives
+    within half a second, since teleop clients stop publishing on release
+    without sending a zero and the velocity controller would otherwise hold
+    its last setpoint. Arming is a separate lock: a UI node wraps the
+    controller manager's switch service behind a plain Bool topic and
+    reports the armed state from the service result, not the request.
+</p> <p>
+Faults are edge-triggered and sticky. A status bridge folds the motor
+    controllers' latched disarm reason into the active error field, because
+    the firmware clears its transient error bits the moment a condition
+    passes and a faulted axis would otherwise read clean. The bridge stops
+    publishing entirely when any axis goes silent, so the health monitor's
+    own watchdog trips rather than trusting a half-stale snapshot. The
+    monitor starts with the drive reported unhealthy, flips true only after
+    a clean snapshot, and emits the fault event on the true-to-false edge,
+    which drives the mission into fault from any state through a wildcard
+    transition. Leaving fault requires an explicit operator acknowledgement.
+</p> <figure> <img src="/portfolio/_astro/fortis-software-integration-a.BLX_GRec_ZpYz3o.webp" srcset="/portfolio/_astro/fortis-software-integration-a.BLX_GRec_ZpYz3o.webp 1x, /portfolio/_astro/fortis-software-integration-a.BLX_GRec_NCvTz.webp 2x" alt="Three-tier software diagram. The bottom tier is a shared message contract covering drive, arm, perception and UI. The middle tier is a single mission state machine block labelled as authorizing all motion. The top tier holds four action subsystems: drive and arm drawn solid, targeting planner and operator UI drawn dashed as planned work." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="516"> <figcaption> Authorization topology at design defense. Every action subsystem sits above the mission state machine rather than beside it, so a subsystem cannot move without the state machine granting it. <span class="figcaption__source">Source: FORTIS design defense deck. Arm has since moved past the scaffolded state shown here.</span> </figcaption> </figure> <h3>Drive control</h3> <p>
+The X-drive kinematics are a 4 by 3 matrix from body twist to wheel
+    speeds with uniform saturation: a command that would exceed one wheel's
+    limit is scaled as a whole so the commanded direction survives, and the
+    pseudoinverse recovers the body twist from wheel feedback. The matrix
+    stays ideal; the two hardware corrections, mirrored right-side motors
+    and the camera-forward convention, live at the boundary in the drive
+    node where they are documented on their constants. Wheel setpoints go
+    through ros2_control to a joint-group velocity controller bound to the
+    motor controllers over CAN, with a mock hardware plugin selectable from
+    the URDF so CI and desk runs exercise the same controller
+    configuration without a bus. Xacro tests expand every combination of
+    those arguments and check the node ids, the joint lists and the URDF
+    itself, since a swapped wheel on the bus would be nearly impossible to
+    diagnose later.
+</p> <p>
+Three constants tie the kinematics to the robot description, and a
+    regression test parses the xacro and fails the moment either side
+    moves. Beside it sit two calibration tools: an off-robot UMBmark
+    calculator that turns measured straight-line and rotation errors into
+    corrected effective wheel radius and lever arm, and a velocity-loop
+    autotuner that steps each motor controller through a coarse-to-fine
+    gain grid on the ground, under load, scoring rise time, overshoot,
+    settling and oscillation, because gains tuned off the ground do not
+    transfer to a loaded robot.
+</p> <p>
+Two helpers sit on top of the command path. A heading hold arbitrates
+    the operator's yaw command against a PID on the estimated yaw: while
+    the operator is turning, their command passes through and the target
+    tracks the live heading, and on release the controller holds the
+    heading they stopped at, with stamp-driven timing and anti-windup. It
+    works only because the estimate's yaw is gyroscope-owned, so the hold
+    never chases wheel slip. An orbit generator turns a held button into a
+    constant body twist of tangential strafe plus coupled yaw, with yaw rate
+    equal to speed over radius, so the cameras keep facing the center; for
+    a holonomic base that is a constant twist and needs no planner. Its own
+    shorter dead-man makes release-to-stop crisp.
+</p> <figure> <img src="/portfolio/_astro/fortis-system-block-diagram.C6cb2vBW_Z8sAhN.webp" srcset="/portfolio/_astro/fortis-system-block-diagram.C6cb2vBW_Z8sAhN.webp 1x, /portfolio/_astro/fortis-system-block-diagram.C6cb2vBW_ZAqMTa.webp 2x" alt="System block diagram with three subsystem groups around a Jetson Orin Nano. Vision: four OAK-D Lite cameras into a USB hub, plus an arm-mounted OAK-D Pro, all on USB. Arm subsystem: a Teensy 4.1 over USB serial driving a gripper servo and J4 wrist servo on PWM, and J1 to J3 closed-loop steppers over three step and direction channels, with a dashed encoder feedback return. Chassis subsystem: four ODrive S1 controllers driving M8325s motors on a daisy-chained CAN bus. An operator PC connects over Ethernet running ROS 2 DDS." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="422"> <figcaption> Compute and interface topology. Every camera is a USB device on the Jetson; the drive bus is CAN and the arm link is USB serial, so the three subsystems fail independently. <span class="figcaption__source">Source: FORTIS design defense deck</span> </figcaption> </figure> <div class="clip"> <figure> <iframe src="https://www.youtube-nocookie.com/embed/oBF4cOx7-Ic" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Control demo: the chassis under operator command through the drive stack, with the mission state gate, the X-drive kinematics and closed-loop wheel velocity in the loop." width="1000" height="562"></iframe> <figcaption> Control demo: the chassis under operator command through the drive stack, with the mission state gate, the X-drive kinematics and closed-loop wheel velocity in the loop. <span class="figcaption__source">Source: Team demo video, YouTube.</span> </figcaption> </figure> </div> <h3>A robot description built for MoveIt 2 and ros2_control</h3> <p>
+The CAD tool's native URDF export was unusable for planning: closed
+    kinematic loops with orphaned loop-closure links, no collision
+    geometry, no joint limits, continuous joints where revolute was
+    required, spurious prismatic constraints, and asymmetric gripper drive
+    paths. I wrote the description by hand as xacro from the CAD treated as
+    truth: 26 links and 25 joints as a clean tree of primitives with
+    inertia macros, all dimensions in one constants file, revolute arm
+    joints with limits, effort and velocity, a driven gripper finger with a
+    mimic joint for the other, optical frames following the ROS camera
+    convention so the depth driver plugs in without remapping, and a tool
+    center point frame placed for grasp planning. The ros2_control block is
+    included behind an argument, so the RViz-only workflow and the
+    real-motor workflow share one file.
+</p> <h3>Arm firmware: deterministic timing and a fail-safe link</h3> <p>
+Step-and-direction control of a stepper needs pulse edges placed with
+    microsecond determinism, and a general-purpose operating system can
+    preempt a process for milliseconds, which on a step train is the
+    difference between smooth motion and a stalled joint. So the arm's
+    motion executor is firmware on a Teensy 4.1: a control state machine
+    over boot, disabled, enabled, moving and fault, with a command-dispatch
+    loop servicing the serial link between motion updates, coordinated
+    multi-axis stepping for the three closed-loop stepper joints from
+    hardware timers, and hardware PWM for the wrist and gripper servos. The
+    stepping library first chosen would not compile against the current
+    Teensy 4 core, so its Teensy 4 successor was vendored into the project
+    and the firmware adapted to it.
+</p> <p>
+The link is safety-relevant and conductor-limited through the arm, so
+    it is a custom binary protocol rather than text or middleware over
+    serial: fixed-layout frames at 1 Mbaud with a start byte, length,
+    sequence counter, type, payload, CRC-16-CCITT over sequence, type and
+    payload, and an end byte, with commands for enable, disable, joint
+    targets, joint velocities, home and clear-faults, acknowledge and
+    negative-acknowledge responses with error codes, and asynchronous boot
+    and fault events. A 250 ms heartbeat watchdog disables the motors if
+    host traffic stops. Homing is teach-and-persist: the operator jogs the
+    arm to its home pose, one command declares it the zero and marks the
+    joints homed, and the reference is checkpointed to EEPROM in ping-pong
+    slots with per-slot CRC, so the arm boots already homed and a power
+    cycle recovers a valid position rather than an arbitrary one. The
+    cycloidal joints are near self-locking unpowered, which is what makes a
+    saved zero trustworthy. Safety is layered: motion is gated on drivers
+    enabled and joints homed, faults latch until explicitly cleared, an
+    external emergency-stop input is honored, and the heartbeat is the
+    comms-loss interlock.
+</p> <p>
+The protocol was exercised first entirely in software against a
+    pseudo-terminal mock of the firmware, then a host client drove the real
+    board over USB, then the signal chain was verified at the level-shifter
+    outputs before any driver was connected. One bring-up episode is worth
+    recording: two joints held torque but would not step despite clean
+    pulses on the oscilloscope. Tracing from the controller pin outward
+    found two independent faults, one driver's control-signal selector left
+    at the wrong logic level and one loose level-shifter jumper that scoped
+    correctly on a high-impedance probe but carried no load. Verifying
+    signal levels before connecting drivers is what kept those from becoming
+    smoked hardware.
+</p> <h3>Arm motion and the MoveToPose contract</h3> <p>
+The arm interface was defined before its kinematics existed, because
+    targeting and the operator interface needed a stable thing to call. A
+    MoveToPose action carries a target pose in, progress out, and a
+    success flag with a message back. The gripper is two Trigger services,
+    because two endpoints map onto two operator buttons and two mission
+    events. Both are gated on mission state with the same latched topic and
+    the same throttled rejection pattern the drive uses, so reading one
+    node tells you how the other works.
+</p> <p>
+Behind that contract is an analytic solver for the four-joint arm. Base
+    yaw decouples from the rest, and with the URDF's pitch axes the
+    shoulder, elbow and wrist reduce to a planar two-link chain in reach
+    and down-positive height with exactly two elbow branches. For a target
+    with no requested tool pitch the solver scans candidate pitches
+    nearest-level first and returns the first pitch that yields a
+    limit-respecting solution, so results are deterministic. A test drives
+    81 in-limit joint configurations through forward kinematics and back
+    and requires every one to close within a millimeter. The motion node
+    solves every published target to drive the latched ik-ok flag that
+    guards the transition from targeting to arm-at-view, reduces goal
+    poses through TF into the arm base frame, streams joint waypoints at a
+    configured joint speed with action feedback, and succeeds once the
+    joint states settle inside tolerance or aborts on timeout. Goals are
+    accepted only in the targeting, view, inspect and pick states; large
+    repositions while carrying a payload are a mission decision, not an
+    operator shortcut.
+</p> <p>
+MoveIt 2 ships in both containers, with the cuMotion planner and its
+    MoveIt adapter staged in the GPU image, and the description above was
+    written so the setup assistant can generate a config from a clean chain.
+    The executor that ran on the robot is the analytic path, and because it
+    sits behind the same action, a MoveIt planner replaces it without any
+    caller changing.
+</p> <p>
+The serial bridge to the arm firmware is a background reader thread
+    that reconnects forever, a heartbeat timer under 100 ms and a status
+    poll, with status frames republished as joint states calibrated to
+    radians and meters, a latched arm status message and diagnostics with
+    decoded fault names. Firmware faults are forwarded as mission fault
+    events. The frame codec is pure standard library and mirrors the
+    firmware's framing exactly, so the bridge, the mock and the tests share
+    one implementation, and the pseudo-terminal mock lets the bridge, the
+    motion node and the full mission test run with no board attached.
+</p> <figure> <img src="/portfolio/_astro/fortis-arm-subsystem-overview.DebBZiVL_1DS5YD.webp" srcset="/portfolio/_astro/fortis-arm-subsystem-overview.DebBZiVL_1DS5YD.webp 1x, /portfolio/_astro/fortis-arm-subsystem-overview.DebBZiVL_2jmdNp.webp 2x" alt="Arm subsystem block diagram. A Teensy 4.1 receives USB serial from the host and drives three outputs: PWM to a gripper servo, PWM to the J4 wrist servo, and three step and direction channels to the J1, J2 and J3 closed-loop steppers through CL57T drivers. A dashed encoder line returns from the steppers to the Teensy." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="638"> <figcaption> The arm motion path. Coordinated multi-axis stepping runs on the microcontroller rather than the host, so trajectory timing does not depend on the operating system scheduler. <span class="figcaption__source">Source: FORTIS design defense deck</span> </figcaption> </figure> <h3>Cameras that could not stream where the code was written</h3> <p>
+The depth cameras cannot stream inside the development container, so
+    the perception stack would have been untestable anywhere but the robot.
+    I built a synthetic camera rig that publishes the exact topic contract
+    of the real driver, compressed RGB, aligned depth, camera info and IMU,
+    for one to four mounts at the URDF poses, over a procedural scene of
+    planes, boxes and spheres rendered by a vectorized raycaster, with
+    closed-form orbit, line and hold trajectories that give exact ground
+    truth beside every frame. Two scene variants differ by exactly one box
+    added and one removed, both of known volume, so the map-diff tests
+    assert exact numbers. Injectable gyro bias and noise exercise the
+    debiasing path.
+</p> <p>
+The crux was texture. Point-sampled speckle aliases once a pixel's
+    footprint on a surface exceeds the noise cell, so the same wall rendered
+    a different pattern from every pose, and that view-dependent shimmer
+    corrupted feature matching. Visual odometry looked broken when the bug
+    was the texture. The fix passes each hit's per-pixel footprint into the
+    shader and fades every speckle octave out as the footprint grows, a
+    small mip-map, with two octaves so surfaces stay trackable up close and
+    across the room. Because checker and speckle are functions of world
+    position only, a surface point renders the same color from any pose,
+    which is exactly what cross-frame tracking needs.
+</p> <h3>Noticing what changed inside the vessel</h3> <p>
+A topic registry is the single source of truth for the perception
+    chain. Each camera's aligned depth is back-projected into a colored
+    cloud in its optical frame, dropping rather than queuing a pair that
+    arrives while the previous one is still reprojecting. A fusion node
+    buffers the newest cloud per camera, transforms all of them into the
+    body frame on a fixed-rate timer, skips any camera whose transform is
+    missing rather than stalling the rest, and voxel-downsamples the
+    merge. A sparse voxel grid with per-voxel hit counts and first-seen
+    color integrates the fused cloud in the odom frame; a map saved on one
+    run becomes the reference for the next, and the diff is published as
+    green-added and red-removed markers for the 3D panel and as a
+    machine-readable summary of counts and volumes. For an inspection
+    robot, that diff is the product.
+</p> <p>
+Detection runs behind one interface with two backends: an HSV blob
+    detector for CI and the synthetic scene, and YOLOv8 through ONNX with
+    weights fetched by a pinned, checksum-verified download. Boxes are
+    lifted to 3D through the depth median and into the body frame, and the
+    nearest graspable object becomes the grasp candidate that guards the
+    pick transition. With no weights on disk the node logs one warning,
+    publishes empty detections at rate and stays alive, so launch files
+    and CI stay green. A target selector turns an operator's click in the
+    3D panel into the mission target, validated against a range annulus and
+    anchored in odom when the transform exists so the target does not drift
+    while the robot moves, and fires the event that takes orbit into
+    targeting. A health node grades every stream's rate onto diagnostics,
+    and a missing publisher is a stale entry, never a crash.
+</p> <figure> <svg viewBox="0 0 740 330" role="img" aria-label="Two-lane diagram. Mapping lane: four chassis depth cameras feed per-camera depth to cloud nodes, into multi-camera fusion in the body frame, into a persistent voxel map, into a cross-run diff against a saved reference map. Estimation lane: wheel odometry contributing translation only, front-camera keyframe visual odometry contributing translation only, and the gyroscope owning yaw, all fused by an Extended Kalman Filter into one continuous pose estimate." class="diagram"> <defs> <marker id="fpd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"> <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-muted)"></path> </marker> </defs> <g font-family="var(--mono)" font-size="12" fill="var(--ink)"> <g font-size="10" fill="var(--ink-muted)" letter-spacing="1.5"> <text x="20" y="28">MAPPING</text> <text x="20" y="188">STATE ESTIMATION</text> </g> <!-- mapping lane --> <rect x="20" y="42" width="112" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="76" y="60" text-anchor="middle">4 chassis</text> <text x="76" y="76" text-anchor="middle">depth cams</text> <rect x="172" y="42" width="112" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="228" y="60" text-anchor="middle">depth to</text> <text x="228" y="76" text-anchor="middle">cloud, per cam</text> <rect x="324" y="42" width="112" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="380" y="60" text-anchor="middle">fusion in</text> <text x="380" y="76" text-anchor="middle">body frame</text> <rect x="476" y="42" width="100" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="526" y="60" text-anchor="middle">voxel</text> <text x="526" y="76" text-anchor="middle">map</text> <rect x="616" y="42" width="104" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="668" y="60" text-anchor="middle">diff vs</text> <text x="668" y="76" text-anchor="middle">saved run</text> <!-- estimation lane --> <rect x="20" y="202" width="140" height="40" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="90" y="227" text-anchor="middle">wheel odometry</text> <rect x="20" y="254" width="140" height="40" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="90" y="279" text-anchor="middle">front-cam VO</text> <rect x="20" y="150" width="140" height="40" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="90" y="175" text-anchor="middle">gyroscope</text> <rect x="330" y="196" width="110" height="56" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="385" y="228" text-anchor="middle" font-weight="600">EKF</text> <rect x="560" y="202" width="140" height="44" fill="var(--wash)" stroke="var(--rule-strong)"></rect> <text x="630" y="220" text-anchor="middle">continuous</text> <text x="630" y="236" text-anchor="middle">pose</text> <!-- arrows --> <g stroke="var(--ink-muted)" fill="none" stroke-width="1.25" marker-end="url(#fpd-arrow)"> <line x1="132" y1="64" x2="168" y2="64"></line> <line x1="284" y1="64" x2="320" y2="64"></line> <line x1="436" y1="64" x2="472" y2="64"></line> <line x1="576" y1="64" x2="612" y2="64"></line> <line x1="160" y1="170" x2="326" y2="208"></line> <line x1="160" y1="222" x2="326" y2="222"></line> <line x1="160" y1="274" x2="326" y2="240"></line> <line x1="440" y1="224" x2="556" y2="224"></line> </g> <!-- fusion rules --> <g font-size="10" fill="var(--ink-muted)"> <text x="180" y="150">yaw only</text> <text x="180" y="214">translation only</text> <text x="180" y="292">translation only, keyframe-anchored</text> <text x="20" y="120">front camera also feeds detection and click-to-target, which hand the mission FSM its target pose</text> </g> </g> </svg> <figcaption>
+The two perception products. The mapping chain ends in a cross-run diff,
+    which is the inspection deliverable; the estimation chain fuses three
+    sources under explicit trust rules, with heading owned by the gyroscope
+    alone.
+<span class="figcaption__source">Source: FORTIS perception and localization packages.</span> </figcaption> </figure> <div class="clip"> <figure> <iframe src="https://www.youtube-nocookie.com/embed/wVuB0_i8wws" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Vision demo: the perception stack running on the robot, with the camera streams, point clouds and detections in the operator interface." width="1000" height="562"></iframe> <figcaption> Vision demo: the perception stack running on the robot, with the camera streams, point clouds and detections in the operator interface. <span class="figcaption__source">Source: Team demo video, YouTube.</span> </figcaption> </figure> </div> <h3>Visual odometry, and what happens when it fails</h3> <p>
+Visual odometry off the front camera is keyframe-anchored ORB matching
+    with a ratio test, depth-lifted PnP with RANSAC and a refinement step,
+    all in a pure module with no ROS imports. Every frame is matched
+    against the current keyframe rather than the previous frame, so
+    matching noise does not compound and drift accrues per keyframe. The
+    node pairs each RGB frame with the newest cached depth under an
+    explicit staleness bound instead of a strict synchronizer, because
+    on-device compression latency wobbles and a strict pairing dropped
+    whole frames. On tracking loss it publishes nothing, so the filter
+    coasts on wheels and gyro instead of ingesting garbage, and keeps
+    publishing the inlier count as a cheap health signal; its covariance
+    scales with the inverse of that count so the filter's trust follows
+    feature support.
+</p> <p>
+I validated the core two ways. Against the public TUM RGB-D handheld
+    sequence with motion-capture ground truth, the integrated trajectory
+    aligned rigidly to truth gives an absolute trajectory error of 0.052 m
+    RMSE over an 8.01 m path, 0.7 percent, with zero tracking losses across
+    all 792 frame pairs. Against the synthetic rig's exact orbit, the final
+    error is bounded under 5 percent of path length as the acceptance test.
+</p> <h3>Wheel slip poisons the heading estimate</h3> <p>
+An Extended Kalman Filter fuses wheel odometry, visual odometry and the
+    camera's inertial unit into one pose estimate, and the engineering is
+    in what is excluded. Wheel odometry contributes translation only: the
+    rear wheels slip under load and a slipping wheel injects a phantom yaw
+    rate the gyroscope never sees, which makes wheel heading actively
+    misleading. Visual odometry contributes translation only, because its
+    rotation quality collapses with feature count while the gyro stays
+    uniform. The gyro owns yaw. Neither source is fused as a pose, only as
+    velocity, because both are open-loop dead reckoning and fusing their
+    position would inject unbounded drift as though it were a measurement.
+    The two filter configurations are held in lockstep by a test that
+    asserts the visual variant is the base file plus one block.
+</p> <p>
+The gyro carries a zero-rate bias, and a stationary detector based on
+    measured velocity could never fire, because bias-driven creep keeps the
+    wheels turning while the drift being cancelled is active. The bias is
+    estimated only while the drive is disarmed, when the motors are idle
+    and the chassis is still by definition, into a slow moving average,
+    with a settle window after each disarm because the chassis rocks as the
+    motors release; while armed the estimate freezes and keeps subtracting.
+    Wheel odometry reads joint velocities by name rather than index, since
+    the broadcaster does not guarantee order, integrates exactly through
+    the yaw turned over each interval rather than a zero-order hold, which
+    removes the inward drift a Euler step accumulates while turning, and
+    runs on message stamps rather than wall clock so it survives delayed,
+    bursty or replayed input. Its twist covariance is deliberately loose,
+    because the wheel velocity reaches the filter stale after the
+    controller, the CAN frame and the control loop.
+</p> <h3>Testing a robot that did not exist yet</h3> <p>
+Unit tests run real in-process nodes over DDS and assert on what
+    comes out of the wire, not internal state. Integration tests live in
+    their own package for process and domain isolation, since launched
+    nodes linger in DDS state and cross-talk with per-package helpers.
+    They import topic names, QoS profiles and event identifiers from the
+    production modules rather than hard-coding strings, because catching
+    divergence between producer and consumer is the whole point. The
+    acceptance test for the full mission brings up the synthetic camera,
+    the perception chain, the state machine and the arm stack against the
+    firmware mock and drives the happy path end to end: idle to orbit on the
+    start event, orbit to targeting on a click that clears the range
+    annulus, targeting to arm-at-view when the motion node reports the
+    inverse kinematics solved and completes the move, into pick on a grasp
+    candidate from detection, into holding, into return-home and back to
+    idle, with every wait bounded and the whole run inside a 150 second
+    budget.
+</p> <h3>Operator interface</h3> <p>
+The operator drives from Foxglove Studio over the tether, on the same
+    ROS 2 graph the robot runs, with four saved layouts: teleop with the
+    per-wheel velocity plot and the arm, disarm, stop and orbit buttons; the
+    four chassis cameras with one streaming per tab; the perception view
+    with clouds, map diff and detections; and the arm panel. The
+    click-to-target flow is the mission interface: a click in the 3D panel
+    becomes the target pose, the state machine advances, and the arm moves.
+</p> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1LnYDP_IDmlIafTbWi77Is2KW7674sXcr/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Perception and operator interface: live camera streams with the visualization bridge running, which is how a target is selected during a mission." width="1000" height="562"></iframe> <figcaption> Perception and operator interface: live camera streams with the visualization bridge running, which is how a target is selected during a mission. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <h2>What ran on hardware</h2> <p>
+On the sponsor's mockup of the port, tunnel and step: the chassis
+    traversed the full tunnel, sustained a toroidal strafe across the step
+    above the 0.1 m/s target with zero tipping and zero wheel-lift events,
+    the arm reached 32.7 inches and completed three of three pick-and-stow
+    cycles with the payload retained, and the operator E-stop halted all
+    motion in 1.58 s. The mockup is plastic rather than graphite, so it
+    confirms fit and end-to-end control; the low-friction margin remains
+    established by the simulation. Every wheel torque figure on this page
+    traces to a sweep whose raw CSV output and plotting scripts are in the
+    repository.
+</p> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1BcgHxDNN7qaBtMkVJexZhIrJMerW9juj/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Hardware toroidal motion: the assembled chassis strafing along the vessel under operator command with closed-loop wheel velocity. This is the Tier 1 capability demonstration." width="1000" height="562"></iframe> <figcaption> Hardware toroidal motion: the assembled chassis strafing along the vessel under operator command with closed-loop wheel velocity. This is the Tier 1 capability demonstration. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/17jxWy0U1d-IcZnKTsC4tbGW_fqg1iq6r/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Hardware holonomic motion: the chassis rotating in place, showing yaw decoupled from translation on the X-drive." width="1000" height="562"></iframe> <figcaption> Hardware holonomic motion: the chassis rotating in place, showing yaw decoupled from translation on the X-drive. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1l7b_nY18hmkEr7_h6eBwOSM-6ptbW0YH/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Hardware port entry: the chassis passing through the entrance profile, with the belly idler rollers carrying it over the port lip." width="1000" height="562"></iframe> <figcaption> Hardware port entry: the chassis passing through the entrance profile, with the belly idler rollers carrying it over the port lip. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1y6r_EktbDXroJr73EeF-_vmlNKghbh9M/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Hardware pick and stow: commanded arm motion through the reach envelope, closing on an object and folding back to the stow pose. This is the Tier 3 capability demonstration." width="1000" height="562"></iframe> <figcaption> Hardware pick and stow: commanded arm motion through the reach envelope, closing on an object and folding back to the stow pose. This is the Tier 3 capability demonstration. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/1rfcRp3M5bgwNcATLAvsUi1IUfy1jkOjy/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Hardware payload hold: the arm retaining a 3 lb object through the stow motion, which is the payload the whole actuator budget was sized against." width="1000" height="562"></iframe> <figcaption> Hardware payload hold: the arm retaining a 3 lb object through the stow motion, which is the payload the whole actuator budget was sized against. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <div class="clip"> <figure> <iframe src="https://drive.google.com/file/d/17D4q4TgNyVyffA3ENmCJMMkPmypKJAOk/preview" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="Hardware emergency stop: the operator-side E-stop cutting all robot motion. Measured at 1.58 s to full stop across three trials, implemented as a hardware interruption of the supply with no software in the loop." width="1000" height="562"></iframe> <figcaption> Hardware emergency stop: the operator-side E-stop cutting all robot motion. Measured at 1.58 s to full stop across three trials, implemented as a hardware interruption of the supply with no software in the loop. <span class="figcaption__source">Source: Hardware demonstration.</span> </figcaption> </figure> </div> <div class="clip"> <figure> <iframe src="https://www.youtube-nocookie.com/embed/cuDwkSAfIYw?list=PLJzUDX4y0hPBtgdsXaRwX__4a0BTDvUJF" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen title="The team demo playlist. Use the list control in the player to move between clips." width="1000" height="562"></iframe> <figcaption> The team demo playlist. Use the list control in the player to move between clips. <span class="figcaption__source">Source: Team demo playlist, YouTube.</span> </figcaption> </figure> </div> <h2>The build</h2> <figure> <img src="/portfolio/_astro/fortis-internal-wiring-as-built.BEQ0A6Yz_UUoRq.webp" srcset="/portfolio/_astro/fortis-internal-wiring-as-built.BEQ0A6Yz_UUoRq.webp 1x, /portfolio/_astro/fortis-internal-wiring-as-built.BEQ0A6Yz_Z2sizkJ.webp 2x" alt="Top-down photograph of the finished chassis with the top skin removed. Four omni wheels sit at the corners. Inside the octagonal aluminum frame, four motor controllers sit at the corners beside their motors, and the centre channel carries the harness: red power runs, black data cables and white USB lines tied off to the frame, with four cameras mounted on the outside faces." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="750"> <figcaption> The as-built interior. The packaging follows the CAD layout: controllers at the corners beside their motors, harness down the centre channel, one camera per face. <span class="figcaption__source">Source: FORTIS fabrication photograph.</span> </figcaption> </figure> <div class="build-gallery"> <div class="figure-pair"> <figure> <img src="/portfolio/_astro/fortis-fabrication-welded-frame.BTks9boG_ZB98XV.webp" srcset="/portfolio/_astro/fortis-fabrication-welded-frame.BTks9boG_ZB98XV.webp 1x, /portfolio/_astro/fortis-fabrication-welded-frame.BTks9boG_Z29YWPI.webp 2x" alt="Front-view photograph of the assembled chassis. Two large black omni wheels with double rows of perimeter rollers flank a machined aluminum body whose underside is cut into a raised arch between the wheels. A depth camera is mounted centrally on the top edge with its cable routed over the back." loading="lazy" decoding="async" fetchpriority="auto" width="620" height="465"> <figcaption> The assembled chassis seen head on. The arch between the wheels is the underbelly clearance profile, and the camera sits on the face that leads during the orbit. <span class="figcaption__source">Source: FORTIS fabrication photograph.</span> </figcaption> </figure><figure> <img src="/portfolio/_astro/fortis-fabrication-front-view.EfQ974Q0_1UflbQ.webp" srcset="/portfolio/_astro/fortis-fabrication-front-view.EfQ974Q0_1UflbQ.webp 1x, /portfolio/_astro/fortis-fabrication-front-view.EfQ974Q0_1OD80K.webp 2x" alt="Head-on photograph of the assembled chassis at bench height. The two front omni wheels with their double roller rings dominate the frame, the front depth camera is mounted on a black bracket at the top centre of the aluminum face, and the word front is hand-written on the panel below it." loading="lazy" decoding="async" fetchpriority="auto" width="620" height="827"> <figcaption> The face that leads during the orbit: front depth camera on its bracket, wheels toed at 45 degrees. The handwriting is the fabrication-floor way of keeping the camera extrinsics honest. <span class="figcaption__source">Source: FORTIS fabrication photograph.</span> </figcaption> </figure> </div> </div> <figure> <img src="/portfolio/_astro/fortis-chassis-step-straddle.BsdkC5yk_ZipHJP.webp" srcset="/portfolio/_astro/fortis-chassis-step-straddle.BsdkC5yk_ZipHJP.webp 1x, /portfolio/_astro/fortis-chassis-step-straddle.BsdkC5yk_Z2sGn06.webp 2x" alt="Photograph of the assembled aluminum chassis on a workbench, viewed at an angle. Two black omni wheels with double rows of perimeter rollers are visible at the near corners. The machined aluminum body has an arched underside between the wheels, and wiring plus a sensor board are mounted along the top plate." loading="lazy" decoding="async" fetchpriority="auto" width="1000" height="1333"> <figcaption> The fabricated chassis with omni wheels mounted. The arched underside between the wheels is the clearance profile that carries the robot over the port lip. <span class="figcaption__source">Source: FORTIS fabrication photograph.</span> </figcaption> </figure>   <h2>Links</h2> <ul class="plain"> <li> <span class="label">Repository</span> <a href="https://github.com/nthankas/FORTIS" rel="noopener">github.com/nthankas/FORTIS</a> </li><li> <span class="label">Skid-steer rejection study</span> <a href="https://github.com/nthankas/FORTIS/blob/main/sim/analysis/skid_steer_rejection.md" rel="noopener">github.com/nthankas/FORTIS/blob/main/sim/analysis/skid_steer_rejection.md</a> </li><li> <span class="label">X-drive analysis</span> <a href="https://github.com/nthankas/FORTIS/blob/main/sim/analysis/xdrive_analysis.md" rel="noopener">github.com/nthankas/FORTIS/blob/main/sim/analysis/xdrive_analysis.md</a> </li><li> <span class="label">Orbit analysis</span> <a href="https://github.com/nthankas/FORTIS/blob/main/sim/analysis/orbit_analysis.md" rel="noopener">github.com/nthankas/FORTIS/blob/main/sim/analysis/orbit_analysis.md</a> </li> </ul>  <nav class="case-nav" aria-label="Other case studies"> <span></span> <a href="/portfolio/#projects">All projects</a> <a href="/portfolio/work/walle">WALL-E block-sorting robot &rsaquo;</a> </nav> </div> </article>  </main> <footer class="foot"> <div class="wrap"> <span>Nikhil Thankasala, robotics software engineer</span> <span>San Francisco Bay Area, CA</span> </div> </footer> </body></html>
