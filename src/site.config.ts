@@ -25,7 +25,19 @@ export const deploy = {
   customDomain: null as string | null,
 };
 
-export const owner = {
+export interface Owner {
+  name: string;
+  location: string;
+  email: string;
+  github: string;
+  githubUrl: string;
+  linkedin: string;
+  linkedinUrl: string;
+  /** Headshot filename under `public/`, or null to omit the photo box. */
+  photo: string | null;
+}
+
+export const owner: Owner = {
   name: 'Nikhil Thankasala',
   location: 'San Francisco Bay Area, CA',
   email: 'nikhilthankasala@gmail.com',
@@ -33,11 +45,7 @@ export const owner = {
   githubUrl: 'https://github.com/nthankas',
   linkedin: 'nikhil-thankasala',
   linkedinUrl: 'https://www.linkedin.com/in/nikhil-thankasala',
-  /**
-   * Headshot filename under `public/` (e.g. 'me.jpg'). Null until one is
-   * chosen; the photo box above the name card is omitted while it is null.
-   */
-  photo: 'headshot.jpg' as string | null,
+  photo: 'headshot.jpg',
 };
 
 /**
@@ -48,8 +56,8 @@ export const owner = {
  * site resolves to email instead, so no link is ever dead and no stub page is
  * rendered.
  */
-export const resume = {
-  file: 'nikhil-thankasala-resume.pdf' as string | null,
+export const resume: { file: string | null; label: string } = {
+  file: 'nikhil-thankasala-resume.pdf',
   label: 'Resume',
 };
 

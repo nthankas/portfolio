@@ -1,5 +1,5 @@
 ---
-import { videos, type VideoId } from '../data/videos';
+import { videos, type Video, type VideoId } from '../data/videos';
 
 /**
  * Demo video slot, in order of preference:
@@ -15,15 +15,7 @@ interface Props {
 }
 
 const { id } = Astro.props;
-const clip = videos[id] as {
-  file: string | null;
-  poster: string | null;
-  drive: string | null;
-  youtube?: string | null;
-  playlist?: string | null;
-  caption: string;
-  source: string;
-};
+const clip: Video = videos[id];
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 let embed: string | null = null;

@@ -163,8 +163,10 @@ its filename. The photo box above the name card is omitted while it is null.
 
 ## Constraints this site holds to
 
-- Zero client-side JavaScript on every route. Project rows are native
-  `<details>`, so they expand without JS and their content stays in the DOM for
-  in-page search and for print.
+- Zero client-side JavaScript on every route. Each project's expanded content
+  sits in a native `<details>` under its row, so it opens without JS and stays
+  in the DOM for in-page search and for print.
+- Valid HTML: the built pages pass html-validate with no inline styles, no
+  block content inside `<summary>`, and scoped table headers.
 - A print stylesheet that expands every disclosure and resolves link targets, so
   printing a case study produces a clean document.

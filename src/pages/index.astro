@@ -27,9 +27,9 @@ const resumeHref = resume.file
   <section class="intro" aria-label="Introduction">
     <div class="wrap">
       <div class="info">
-        <div class="box" style="margin:0;border:0;background:none">
+        <div class="info-box">
           <div class="box-title">Personal info</div>
-          <dl class="kv" style="padding-top:10px">
+          <dl class="kv">
             <dt>Currently</dt>
             <dd>Working in the Tactile Manipulation Lab under Tae Myung Huh</dd>
             <dt>Recently</dt>
@@ -67,7 +67,7 @@ const resumeHref = resume.file
       {
         owner.photo && (
           <div class="photo">
-            <img src={`${base}/${owner.photo}`} alt={`Photo of ${owner.name}`} width="640" height="640" />
+            <img src={`${base}/${owner.photo}`} alt={`Photo of ${owner.name}`} width="640" height="640" decoding="async" />
           </div>
         )
       }
@@ -81,16 +81,20 @@ const resumeHref = resume.file
       <div class="box">
         <div class="box-title">Recently worked on</div>
         <div class="box-body">
-          {
-            recent.map((r, i) => (
-              <div style={i ? 'margin-top:14px;padding-top:12px;border-top:1px dashed var(--rule)' : ''}>
-                <p><strong>{r.org}</strong><br />{r.title}, {r.dates}</p>
-                <ul>
-                  {r.stack.map((s) => <li>{s}</li>)}
-                </ul>
-              </div>
-            ))
-          }
+          <dl class="kv">
+            {
+              recent.map((r) => (
+                <>
+                  <dt>{r.org}</dt>
+                  <dd>
+                    {r.title}
+                    <br />
+                    <span class="muted">{r.dates}</span>
+                  </dd>
+                </>
+              ))
+            }
+          </dl>
         </div>
       </div>
 
@@ -107,7 +111,7 @@ const resumeHref = resume.file
                     <br />
                     {e.detail}
                     <br />
-                    <span style="color:var(--ink-muted)">{e.dates}</span>
+                    <span class="muted">{e.dates}</span>
                   </dd>
                 </>
               ))
@@ -134,12 +138,16 @@ const resumeHref = resume.file
       <section class="box" id="projects" aria-labelledby="projects-heading">
         <h2 class="box-title" id="projects-heading">Projects</h2>
         {projects.map((entry) => <ProjectEntry entry={entry} />)}
-        <div class="box-body" style="border-top:1px solid var(--rule)">
-          <div class="table-wrap" style="margin:0">
+        <div class="box-body repos">
+          <div class="table-wrap">
             <table>
               <caption>Other repositories at github.com/{owner.github}</caption>
               <thead>
-                <tr><th>Repository</th><th>What it does</th><th>Language</th></tr>
+                <tr>
+                  <th scope="col">Repository</th>
+                  <th scope="col">What it does</th>
+                  <th scope="col">Language</th>
+                </tr>
               </thead>
               <tbody>
                 {
@@ -161,17 +169,17 @@ const resumeHref = resume.file
         <h2 class="box-title" id="experience-heading">Experience</h2>
         {
           experience.map((role) => (
-            <div class="job">
+            <article class="job">
               <div class="head">
-                <span class="org">{role.org}</span>
+                <h3 class="org">{role.org}</h3>
                 <span class="when">{role.dates}, {role.location}</span>
               </div>
-              <div class="title">{role.title}</div>
+              <p class="title">{role.title}</p>
               <p>{role.body}</p>
               <ul class="chips">
                 {role.stack.map((s) => <li>{s}</li>)}
               </ul>
-            </div>
+            </article>
           ))
         }
       </section>

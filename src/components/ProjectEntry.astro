@@ -13,53 +13,61 @@ const d = entry.data;
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const lead = d.lead ? getFigure(d.lead) : null;
-const repo = d.artifacts.find((a) => a.label === 'Repository' && a.href);
-const others = d.artifacts.filter((a) => a.href && a !== repo);
+const linked = d.artifacts.filter((a): a is typeof a & { href: string } => Boolean(a.href));
+const repo = linked.find((a) => a.label === 'Repository');
+const others = linked.filter((a) => a !== repo);
+const headingId = `project-${entry.id}`;
 ---
 
-<details class="proj" id={entry.id}>
-  <summary>
+<article class="proj" id={entry.id} aria-labelledby={headingId}>
+  <div class="proj-row">
     {lead && <Image class="thumb" src={lead.src} alt={lead.alt} width={340} densities={[1, 2]} loading="lazy" />}
     <div class={lead ? undefined : 'no-thumb'}>
-      <h3>{d.title}</h3>
-      <div><span class="tag">{d.org}</span></div>
+      <h3 id={headingId}>{d.title}</h3>
+      <p class="tag-line"><span class="tag">{d.org}</span></p>
       <p class="blurb">{d.thesis}</p>
     </div>
     <div class="links">
-      Click to learn more
       {d.caseStudy && <a href={`${base}/work/${d.caseStudy}`}>Full write-up</a>}
       {repo && <a href={repo.href} rel="noopener">GitHub</a>}
     </div>
-  </summary>
-
-  <div class="proj-body">
-    <div class="table-wrap">
-      <table>
-        <tbody>
-          <tr><th scope="row">Role</th><td>{d.role}</td></tr>
-          <tr><th scope="row">Dates</th><td>{d.dates}</td></tr>
-          {d.team && <tr><th scope="row">Team</th><td>{d.team}</td></tr>}
-          <tr><th scope="row">Stack</th><td>{d.stack.join(', ')}</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <Content />
-
-    {
-      others.length > 0 && (
-        <>
-          <h3>More links</h3>
-          <ul class="plain">
-            {others.map((a) => (
-              <li>
-                <span class="label">{a.label}</span>
-                <a href={a.href} rel="noopener">{a.href!.replace(/^https?:\/\//, '')}</a>
-              </li>
-            ))}
-          </ul>
-        </>
-      )
-    }
   </div>
-</details>
+
+  <details class="proj-more">
+    <summary>
+      <span class="proj-more__open">Click to learn more</span>
+      <span class="proj-more__close">Show less</span>
+    </summary>
+
+    <div class="proj-body">
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><th scope="row">Role</th><td>{d.role}</td></tr>
+            <tr><th scope="row">Dates</th><td>{d.dates}</td></tr>
+            {d.team && <tr><th scope="row">Team</th><td>{d.team}</td></tr>}
+            <tr><th scope="row">Stack</th><td>{d.stack.join(', ')}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <Content />
+
+      {
+        others.length > 0 && (
+          <>
+            <h3>More links</h3>
+            <ul class="plain">
+              {others.map((a) => (
+                <li>
+                  <span class="label">{a.label}</span>
+                  <a href={a.href} rel="noopener">{a.href.replace(/^https?:\/\//, '')}</a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+    </div>
+  </details>
+</article>

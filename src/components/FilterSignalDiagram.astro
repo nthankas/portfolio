@@ -12,7 +12,7 @@
     viewBox="0 0 740 300"
     role="img"
     aria-label="Signal path diagram. Top lane: four analog inputs enter a scanning analog to digital converter driven from its interrupt handler, fill a circular buffer, pass through a 32 tap FIR convolution, and leave through a DAC over SPI synchronized to the conversion rate. Bottom lane: UART packets enter a packet queue, update coefficient banks, and the banks are stored in external EEPROM over I2C; the active bank feeds the FIR block."
-    style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"
+    class="diagram"
   >
     <defs>
       <marker id="fsd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">

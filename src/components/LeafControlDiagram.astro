@@ -11,7 +11,7 @@
     viewBox="0 0 720 300"
     role="img"
     aria-label="State diagram of the irrigation controller. Four states: calibrate, idle, water and soak. Calibrate leads to idle. Idle transitions to water only when soil is below the trigger and the reservoir is above its floor. Water runs a single 500 millisecond pump pulse and always transitions to soak. Soak waits 10 seconds for percolation, then either returns to idle on reaching the target or issues another pulse by returning to water, with a hard cap of 10 pulses per cycle."
-    style="width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--rule)"
+    class="diagram"
   >
     <defs>
       <marker id="lcd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
