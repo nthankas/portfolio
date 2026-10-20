@@ -71,7 +71,7 @@ export const actuators = {
   ] satisfies Column[],
   rows: [
     ['J1 yaw', 'NEMA 17, 25:1 cycloidal', '12.0', '0.05', '4.52'],
-    ['J2 shoulder', 'NEMA 23, 20:1 planetary', '30.0', '14.67', '17.62'],
+    ['J2 shoulder', 'NEMA 23, 50:1 planetary (sized in simulation at 20:1)', '30.0', '14.67', '17.62'],
     ['J3 elbow', 'NEMA 17, 25:1 cycloidal', '12.0', '5.96', '6.74'],
     ['J4 wrist', 'Servo', '4.9', '1.90', '1.95'],
   ],
@@ -136,7 +136,8 @@ export const architecture = {
     ['Drive control', 'X-drive kinematics to wheel setpoints, state gated', '30'],
     ['Arm control', 'Analytic inverse kinematics, motion action, motor bridge', '28'],
     ['Perception', 'Clouds, fusion, voxel map and diff, visual odometry, detection', '27'],
-    ['Localisation', 'Wheel odometry, gyro debias, EKF composition', '21'],
+    ['Localisation', 'Wheel odometry, gyro debias, EKF composition', '25'],
+    ['Kinematics library', 'X-drive kinematics and URDF sync', '13'],
     ['Simulation support', 'Synthetic camera rig standing in for hardware', '23'],
     ['Motor control wiring', 'Controller manager configuration and bring-up', '23'],
     ['Integration tests', 'Cross-component seams', '34'],

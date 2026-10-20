@@ -15,7 +15,7 @@ stack:
   - MoveIt 2
   - OpenCV
   - Docker
-  - Jetson Orin
+  - Jetson Orin Nano Super
   - Teensy 4.1
 repo: https://github.com/nthankas/FORTIS
 caseStudy: fortis
@@ -78,7 +78,7 @@ rings of spheres, then the real roller meshes as a 44 degree-of-freedom
 articulation with convex hulls, then five-sphere roller colliders with
 deliberate gaps after a single sphere sank through the hub and seven spheres
 over-torqued. An early sphere-roller model overestimated torque, so motor
-sizing was conservative. The same environment settled the drivetrain: a sweep
+margins were sized conservatively. The same environment settled the drivetrain: a sweep
 of skid-steer geometries showed a point turn over the step was not viable, which
 moved the program to an X-drive on omni wheels.
 
@@ -128,7 +128,8 @@ On the Teensy, a control state machine over boot, disabled, enabled, moving and
 fault drives three closed-loop steppers and two servos with coordinated
 hardware-timed stepping, behind a CRC-checked binary serial protocol at 1 Mbaud
 with a 250 ms heartbeat watchdog that disables the motors on comms loss, and
-teach-and-persist homing checkpointed to EEPROM so the arm boots homed. The CAD
+joint positions checkpointed to EEPROM and recovered at boot, so the arm
+powers up knowing its pose. The CAD
 tool's URDF export had closed loops, no collision geometry and no joint limits,
 so I wrote the description by hand: 26 links and 25 joints of clean primitives,
 limits on every arm joint, a mimic gripper, a tool center point for grasp
@@ -154,8 +155,10 @@ same color from any pose.
 Per-camera clouds, body-frame fusion that skips a missing transform instead of
 stalling, a sparse voxel grid with hit counts, and a cross-run diff published as
 markers and a machine-readable summary. Detection behind one interface with a
-blob backend for CI and YOLOv8 through ONNX for the robot, degrading to empty
-detections rather than crashing. A click in the 3D panel becomes the mission
+blob backend for CI and a YOLOv8 ONNX backend, degrading to empty detections
+rather than crashing. GA asked for foreign-object detection in the vessel; the
+backend and pinned weights are in place, ready for training on in-vessel
+imagery. A click in the 3D panel becomes the mission
 target and the event that advances the state machine.
 
 <FortisPerceptionDiagram />
@@ -174,7 +177,7 @@ while the drive is disarmed, the one trustworthy stillness signal.
 
 ### Testing a robot that did not exist yet
 
-45 test files and 233 tests, run by CI on every push with per-package DDS domain
+47 test files and 240 tests, run by CI on every push with per-package DDS domain
 isolation. Integration tests import topic names from the production modules so a
 rename fails loudly. The full-mission acceptance test drives the synthetic
 camera, the perception chain, the state machine and the arm stack against a

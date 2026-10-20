@@ -64,7 +64,7 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     Eleven ROS 2 packages plus the simulation tooling, roughly fifteen
-    thousand lines of Python, 45 test files and 233 test functions, built
+    thousand lines of Python, 47 test files and 240 test functions, built
     and tested on every push by CI. The rest of this page walks through the
     problems in the order they were hit.
   </p>
@@ -145,9 +145,9 @@ if (!entry) throw new Error('Missing project entry: fortis');
   <p>
     I validated the five-sphere model against the single-sphere baseline
     with a full orbit sweep and kept the bias on the record: an early
-    sphere-roller model overestimated torque, so motor sizing was
-    conservative. A model biased the other way would have been useless for
-    sizing motors.
+    sphere-roller model overestimated torque, so motor margins were sized
+    conservatively. A model biased the other way would have been useless
+    for sizing motors.
   </p>
 
   <Figure id="fortis-isaac-viewport" />
@@ -397,13 +397,12 @@ if (!entry) throw new Error('Missing project entry: fortis');
     targets, joint velocities, home and clear-faults, acknowledge and
     negative-acknowledge responses with error codes, and asynchronous boot
     and fault events. A 250 ms heartbeat watchdog disables the motors if
-    host traffic stops. Homing is teach-and-persist: the operator jogs the
-    arm to its home pose, one command declares it the zero and marks the
-    joints homed, and the reference is checkpointed to EEPROM in ping-pong
-    slots with per-slot CRC, so the arm boots already homed and a power
-    cycle recovers a valid position rather than an arbitrary one. The
-    cycloidal joints are near self-locking unpowered, which is what makes a
-    saved zero trustworthy. Safety is layered: motion is gated on drivers
+    host traffic stops. Joint positions are checkpointed to EEPROM in
+    ping-pong slots with per-slot CRC and recovered at boot, so the arm
+    powers up knowing its pose and a power cycle recovers a valid position
+    rather than an arbitrary one. The cycloidal joints are near
+    self-locking unpowered, which is what makes a saved position
+    trustworthy. Safety is layered: motion is gated on drivers
     enabled and joints homed, faults latch until explicitly cleared, an
     external emergency-stop input is honored, and the heartbeat is the
     comms-loss interlock.
@@ -528,8 +527,10 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     Detection runs behind one interface with two backends: an HSV blob
-    detector for CI and the synthetic scene, and YOLOv8 through ONNX with
-    weights fetched by a pinned, checksum-verified download. Boxes are
+    detector for CI and the synthetic scene, and a YOLOv8 ONNX backend. GA
+    asked for foreign-object detection in the vessel; the backend and
+    pinned weights are in place, ready for training on in-vessel imagery.
+    Boxes are
     lifted to 3D through the depth median and into the body frame, and the
     nearest graspable object becomes the grasp candidate that guards the
     pick transition. With no weights on disk the node logs one warning,

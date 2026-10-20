@@ -30,7 +30,7 @@ const registry: Record<string, Entry> = {
 
   'fortis-block-diagram': {
     file: 'fortis/fortis-system-block-diagram.png',
-    alt: 'System block diagram with three subsystem groups around a Jetson Orin Nano. Vision: four OAK-D Lite cameras into a USB hub, plus an arm-mounted OAK-D Pro, all on USB. Arm subsystem: a Teensy 4.1 over USB serial driving a gripper servo and J4 wrist servo on PWM, and J1 to J3 closed-loop steppers over three step and direction channels, with a dashed encoder feedback return. Chassis subsystem: four ODrive S1 controllers driving M8325s motors on a daisy-chained CAN bus. An operator PC connects over Ethernet running ROS 2 DDS.',
+    alt: 'System block diagram with three subsystem groups around a Jetson Orin Nano Super. Vision: four OAK-D Lite cameras into a USB hub, plus an arm-mounted OAK-D Pro, all on USB. Arm subsystem: a Teensy 4.1 over USB serial driving a gripper servo and J4 wrist servo on PWM, and J1 to J3 closed-loop steppers over three step and direction channels, with a dashed encoder feedback return. Chassis subsystem: four ODrive S1 controllers driving M8325s motors on a daisy-chained CAN bus. An operator PC connects over Ethernet running ROS 2 DDS.',
     caption:
       'Compute and interface topology. Every camera is a USB device on the Jetson; the drive bus is CAN and the arm link is USB serial, so the three subsystems fail independently.',
     source: 'FORTIS design defense deck',
