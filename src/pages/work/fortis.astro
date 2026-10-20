@@ -447,9 +447,11 @@ if (!entry) throw new Error('Missing project entry: fortis');
     and requires every one to close within a millimeter. The motion node
     solves every published target to drive the latched ik-ok flag that
     guards the transition from targeting to arm-at-view, reduces goal
-    poses through TF into the arm base frame, streams joint waypoints at a
-    configured joint speed with action feedback, and succeeds once the
-    joint states settle inside tolerance or aborts on timeout. Goals are
+    poses through TF into the arm base frame, sends the stepper goals once
+    so the firmware runs its own coordinated move, eases the wrist servo
+    along the lead stepper's measured progress with action feedback, and
+    succeeds once the joint states settle inside tolerance or aborts on
+    timeout, re-targeting every joint at its measured position on cancel. Goals are
     accepted only in the targeting, view, inspect and pick states; large
     repositions while carrying a payload are a mission decision, not an
     operator shortcut.
@@ -600,9 +602,10 @@ if (!entry) throw new Error('Missing project entry: fortis');
     with a settle window after each disarm because the chassis rocks as the
     motors release; while armed the estimate freezes and keeps subtracting.
     Wheel odometry reads joint velocities by name rather than index, since
-    the broadcaster does not guarantee order, integrates exactly through
-    the yaw turned over each interval rather than a zero-order hold, which
-    removes the inward drift a Euler step accumulates while turning, and
+    the broadcaster does not guarantee order, integrates each interval at
+    the mid-interval heading rather than the start-of-interval one, which
+    cancels the first-order arc error a plain Euler step leaves while
+    turning, and
     runs on message stamps rather than wall clock so it survives delayed,
     bursty or replayed input. Its twist covariance is deliberately loose,
     because the wheel velocity reaches the filter stale after the
