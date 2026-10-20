@@ -8,7 +8,6 @@ import DataTable from '../../components/DataTable.astro';
 import FortisPerceptionDiagram from '../../components/FortisPerceptionDiagram.astro';
 import {
   capabilityTiers,
-  skidSteer,
   actuators,
   armResults,
   orbitResults,
@@ -145,33 +144,21 @@ if (!entry) throw new Error('Missing project entry: fortis');
 
   <p>
     I validated the five-sphere model against the single-sphere baseline
-    with a full orbit sweep and kept the bias on the record: sphere chains
-    resist more than free-spinning rollers, roughly 20 percent more torque
-    on matched runs, so every motor margin the simulation reported is
-    conservative by construction. A model biased the other way would have
-    been useless for sizing motors.
+    with a full orbit sweep and kept the bias on the record: an early
+    sphere-roller model overestimated torque, so motor sizing was
+    conservative. A model biased the other way would have been useless for
+    sizing motors.
   </p>
 
   <Figure id="fortis-isaac-viewport" />
 
-  <h3>The skid-steer chassis could not turn on the step</h3>
-
   <p>
-    After treads, the team moved to skid-steer. To orbit from its landing
-    orientation the robot has to point-turn while straddling a 4.5 inch
-    step. I wrote a parametric robot builder and swept 60 geometrically
-    valid configurations of wheel radius, width, wheelbase, track and
-    torque. Three completed the turn, all at 85 to 116 degrees of tilt with
-    7 to 10 inches of radial drift, because every wheel arc crosses the step
-    circle mid-turn and the wheels must climb a wall nearly their own
-    radius. On the flat floor the differential wheel speed could not even
-    generate the shear to rotate. That study, run with a friction
-    coefficient more generous than the real floor, moved the program to an
-    X-drive on omni wheels, which strafes the orbit with no yaw and never
-    crosses the step.
+    The same environment settled the drivetrain. A parametric sweep of
+    skid-steer geometries showed a point turn over the step was not viable,
+    since every wheel arc has to cross the step mid-turn, and that moved the
+    program to an X-drive on omni wheels, which strafes the orbit with no
+    yaw and never crosses the step.
   </p>
-
-  <DataTable {...skidSteer} />
 
   <h3>Measuring torque honestly</h3>
 

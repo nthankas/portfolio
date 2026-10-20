@@ -23,8 +23,6 @@ lead: fortis-wiring-asbuilt
 artifacts:
   - label: Repository
     href: https://github.com/nthankas/FORTIS
-  - label: Skid-steer rejection study
-    href: https://github.com/nthankas/FORTIS/blob/main/sim/analysis/skid_steer_rejection.md
   - label: X-drive analysis
     href: https://github.com/nthankas/FORTIS/blob/main/sim/analysis/xdrive_analysis.md
   - label: Orbit analysis
@@ -40,7 +38,6 @@ import Clip from '../../components/Clip.astro';
 import DataTable from '../../components/DataTable.astro';
 import FortisPerceptionDiagram from '../../components/FortisPerceptionDiagram.astro';
 import {
-  skidSteer,
   armResults,
   architecture,
 } from '../../data/fortis';
@@ -80,17 +77,10 @@ and rolls freely across it cannot be declared as a material. Three iterations:
 rings of spheres, then the real roller meshes as a 44 degree-of-freedom
 articulation with convex hulls, then five-sphere roller colliders with
 deliberate gaps after a single sphere sank through the hub and seven spheres
-over-torqued. The model reads about 20 percent high on torque, so every motor
-margin it reported is conservative by construction.
-
-### The skid-steer chassis could not turn on the step
-
-I wrote a parametric robot builder and swept 60 configurations through the
-point turn a skid-steer robot needs over the step. Three completed it, all at 85
-to 116 degrees of tilt, because every wheel arc crosses the step mid-turn. That
-study moved the program to an X-drive on omni wheels.
-
-<DataTable {...skidSteer} />
+over-torqued. An early sphere-roller model overestimated torque, so motor
+sizing was conservative. The same environment settled the drivetrain: a sweep
+of skid-steer geometries showed a point turn over the step was not viable, which
+moved the program to an X-drive on omni wheels.
 
 ### A joint space that is mostly invalid
 
