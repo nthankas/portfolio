@@ -1,0 +1,6 @@
+# Effective only when the site is served from a domain root (custom domain).
+# On the GitHub Pages project path this file is informational.
+User-agent: *
+Allow: /
+
+Sitemap: https://nthankas.github.io/portfolio/sitemap-index.xml
